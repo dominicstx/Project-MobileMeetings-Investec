@@ -1,0 +1,4438 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <link rel="stylesheet" href="css/ratchet.css"/>
+    <link rel="stylesheet" href="css/styles.css"/>
+    
+    <!-- FONT AWESOME -->
+    <link rel="stylesheet" href="font-awesome-4.0.3/css/font-awesome.min.css"/>
+    
+   <!-- there will be no local testing as so far it worketh not -->
+    <!-- Local Testing -- >
+     
+    <script src="jquery/jquery-2.0.0.min.js"></script>
+    <script src="backbone/underscore-1.4.4.min.js"></script>
+    <script src="backbone/backbone-1.0.0.min.js"></script>
+    <script src="MockCordova.js"></script>
+    <script src="forcetk.mobilesdk.js"></script>
+    <script src="cordova.force.js"></script>
+    <script src="MockSmartStore.js"></script>
+    <script src="smartsync.js"></script>
+    <script src="fastclick.js"></script>
+    <script src="stackrouter.js"></script>
+   
+    <script src="moment.min.js"></script>
+    <script src="jquery/jquery.autosize.min.js"></script>
+    
+       
+    <script src="auth_local.js"></script>
+     
+     <!-- End Local Testing -->
+    
+    
+    
+    <!-- Container... -->
+    
+    <script src="jquery/jquery-2.0.0.min.js"></script>
+    <!--
+    <script src="backbone/underscore-1.4.4.min.js"></script>
+    <script src="backbone/backbone-1.0.0.min.js"></script>-->
+    <script src="backbone/underscore-1.6.0.min.js"></script>
+    <script src="backbone/backbone-1.1.2.min.js"></script>
+    <script src="cordova-2.3.0.js"></script>
+    <script src="forcetk.mobilesdk.js"></script>
+    <script src="cordova.force.js"></script>
+    <script src="smartsync.js"></script>
+    <script src="fastclick.js"></script>
+    <script src="stackrouter.js"></script>
+    <script src="moment.min.js"></script>
+    <script src="numeral.js"></script>
+    <script src="jquery/jquery.autosize.min.js"></script>
+    <script src="spin.min.js"></script>
+    <script src="auth.js"></script>
+    
+    <!-- Container... -->
+    
+    
+    <link rel="stylesheet" href="css/alpha.css"/>
+    
+
+    
+
+
+<!-- --------------------------------------- Search page template ------------------------------------------------- -->
+<script id="search-page" type="text/template">
+  <header class="bar-title">
+    <% if (ShowBack) {%><a class="button-prev">Back</a><% } %>
+    <% if (ShowDone) {%><a class="button-prev">Done</a><% } %>
+    <h1 class="title"><%= jQuery(document).width() < 400 && TitleShortValue != "" ? TitleShortValue : TitleValue %></h1>
+    <% if (ShowAdd && IsOnline) {%><a class="button-next">Add</a><% }
+    else if (ShowAdd) {%><a class="button-disabled button-next button-next-disabled">Add</a> <% } %>
+  </header>
+  <div class="bar-standard bar-header-secondary">
+    <input type="search" class="search-key" placeholder="Search"/>
+  </div>
+<nav class="bar-tab">
+    <span id="offlineStatus"></span>
+    
+    <% if (ShowRefresh) {%>
+    <a class="button refresh"><i class="fa fa-refresh"></i></a>
+    <% } %>
+    <% if (ShowGetSummaries) {%>
+    <a class="button get-summaries">Get Summaries</a>
+    <% } %>
+
+    
+</nav>
+
+  <div class="content">
+  
+  
+  
+  
+    <ul class="list">
+    </ul>
+    <% if (ShowSave) {%>
+        <div class="content-padded">
+        <a class="button save">Save</a>
+        </div>
+    <% } %>
+
+
+  </div>
+</script>
+
+
+<!-- ---------- no meetings found template ---------------- -->
+<script id="meetings-not-found" type="text/template">
+    <li class="notFoundWhySoHuge">
+        You do not have any Meetings that match your search criteria.
+        <br />
+        Have you resolved all your meetings in Salesforce?
+    </li>
+</script>
+    
+    
+
+<!--
+  <div class="bar-standard bar-header-secondary">
+    <input type="search" class="search-key" placeholder="Search"/>
+  </div>
+  
+  //put a remove button or a checkbox instead?
+      <img id="selectLow" src="tdnoff2.jpg" height="32px" width="32px" />
+ 
+ 
+-->
+
+
+
+<!-- Opportunities Templates -->
+
+<!-- --------------------------------------- Opportunity list item Template ------------------------------------------ -->
+<script id="opportunity-list-item" type="text/template">
+    <div  >
+        <div style="float:right; width:34px;">
+            <span class="selectcheck <%= Checked ? 'icon-positive' : 'icon-inactive' %>" >
+                <i class="fa fa-check fa-3x"></i>
+            </span>
+        </div>
+
+
+        <div  class="listItem">
+            <span class="important"><%= Account.Name %></span><br />
+            <span ><%= CurrencyIsoCode %> <%= numeral(Amount).format('(0.00a)') %></span><br />
+            <span ><%= StageName %> (close by <%= moment(CloseDate).format("dddd, MMMM Do YYYY")  %>)</span><br />
+            <span class="not-important"><%= Capability_Name__c %></span><br />
+        </div>
+      
+        <div style="clear:both" />
+    
+    </div>
+</script>
+<!-- --------------------------------------- Opportunity Meeting list item Template ------------------------------------------ -->
+<script id="opportunitymeeting-list-item" type="text/template">
+    <div  >
+
+        <div style="float:right; width:34px;">
+            <span id="deleteObj" class="<%= __locally_deleted__ ? 'icon-negative' : 'icon-inactive' %>">
+            <i class="fa fa-times fa-3x"></i>
+            </span>
+        
+        </div>
+
+        <div class="listItem">
+            <span class="important"><%= Opportunity__r.Account.Name %></span><br />
+            <span ><%= Opportunity__r.CurrencyIsoCode %> <%= numeral(Opportunity__r.Amount).format('(0.00a)') %></span><br />
+            <span ><%= Opportunity__r.StageName %> (close by <%= moment(Opportunity__r.CloseDate).format("dddd, MMMM Do YYYY") %>)</span><br />
+            <span class="not-important"><%= Opportunity__r.Capability_Name__c %></span><br />
+       </div>
+      
+    
+    </div>
+</script>
+<!-- --------------------------------------- Opportunity Meeting list item Template for SYNC PAGE ------------------------------------------ -->
+<script id="opportunitymeeting-list-item-sync" type="text/template">
+    <div  >
+        <div class="listItem">
+            <span class="important"><%= Opportunity__r.Account.Name %></span><br />
+            <span ><%= Opportunity__r.CurrencyIsoCode %> <%= numeral(Opportunity__r.Amount).format('(0.00a)') %></span><br />
+            <span ><%= Opportunity__r.StageName %> (close by <%= moment(Opportunity__r.CloseDate).format("dddd, MMMM Do YYYY") %>)</span><br />
+            <span class="not-important"><%= Opportunity__r.Capability_Name__c %></span><br />
+        </div>
+    
+    </div>
+</script>
+
+<!-- Opportunities Templates END -->
+
+
+
+
+
+
+
+<!-- Internal Funds Templates -->
+
+
+
+<!-- --------------------------------------- Internal Fund list item Template ------------------------------------------ -->
+<script id="internalfund-list-item" type="text/template">
+    <div  >
+        <div style="float:right; width:34px;">
+            <span class="selectcheck <%= Checked ? 'icon-positive' : 'icon-inactive' %>" >
+                <i class="fa fa-check fa-3x"></i>
+            </span>
+        </div>
+
+
+        <div  class="listItem">
+            <span class="important"><%= Name %></span><br />
+            <span ><%= Capability2__c %></span><br />
+            
+            <% if (Market_Value_GBP__c != null && Market_Value_GBP__c != 0 ) { %>
+            <span class="not-important">GBP <%= numeral(Market_Value_GBP__c).format('(0.00a)') %></span><br />
+            <% } %>
+
+            <% if (Base_Currency__c != 'GBP' && Market_Value_Base_Currency__c != null && Market_Value_Base_Currency__c != 0 ) { %>
+            <span class="not-important"><%= Base_Currency__c %> <%= numeral(Market_Value_Base_Currency__c).format('(0.00a)') %></span><br />
+            <% } %>
+        </div>
+      
+        <div style="clear:both" />
+    
+    </div>
+</script>
+<!-- --------------------------------------- Internal Fund Meeting list item Template ------------------------------------------ -->
+<script id="internalfundmeeting-list-item" type="text/template">
+    <div  >
+
+        <div style="float:right; width:34px;">
+
+            <span id="deleteObj" class="<%= __locally_deleted__ ? 'icon-negative' : 'icon-inactive' %>">
+                <i class="fa fa-times fa-3x"></i>
+            </span>
+        
+        </div>
+
+        <div class="listItem">
+            <span class="important"><%= Internal_Fund__r.Name %></span><br />
+            <span ><%= Internal_Fund__r.Capability2__c %></span><br />
+            
+            <% if (Internal_Fund__r.Market_Value_GBP__c != null && Internal_Fund__r.Market_Value_GBP__c != 0 ) { %>
+            <span class="not-important">GBP <%= numeral(Internal_Fund__r.Market_Value_GBP__c).format('(0.00a)') %></span><br />
+            <% } %>
+
+            <% if (Internal_Fund__r.Base_Currency__c != 'GBP' && Internal_Fund__r.Market_Value_Base_Currency__c != null && Internal_Fund__r.Market_Value_Base_Currency__c != 0 ) { %>
+            <span class="not-important"><%= Internal_Fund__r.Base_Currency__c %> <%= numeral(Internal_Fund__r.Market_Value_Base_Currency__c).format('(0.00a)') %></span><br />
+            <% } %>
+       </div>
+        <div style="clear:both" />
+      
+    
+    </div>
+</script>
+<!-- --------------------------------------- Internal Fund Meeting list item Template for SYNC PAGE ------------------------------------------ -->
+<script id="internalfundmeeting-list-item-sync" type="text/template">
+    <div  >
+        <div style="float:right; width:34px;">
+
+        
+        </div>
+
+
+
+
+        <div  class="listItem">
+            <span class="important"><%= Internal_Fund__r.Name %></span><br />
+            <span ><%= Internal_Fund__r.Scheme_Name__c %></span><br />
+            
+            <% if (Internal_Fund__r.Market_Value_GBP__c != null && Internal_Fund__r.Market_Value_GBP__c != 0 ) { %>
+            <span class="not-important">GBP <%= numeral(Internal_Fund__r.Market_Value_GBP__c).format('(0.00a)') %></span><br />
+            <% } %>
+
+            <% if (v__r.Base_Currency__c != 'GBP' && v__r.Market_Value_Base_Currency__c != null && Internal_Fund__r.Market_Value_Base_Currency__c != 0 ) { %>
+            <span class="not-important"><%= Internal_Fund__r.Base_Currency__c %> <%= numeral(Internal_Fund__r.Market_Value_Base_Currency__c).format('(0.00a)') %></span><br />
+            <% } %>
+
+        </div>
+    
+    </div>
+</script>
+
+<!-- Internal Funds Templates END -->
+
+<!-- Capabilities Templates -->
+
+<!-- --------------------------------------- Capability list item Template ------------------------------------------ -->
+<script id="capability-list-item" type="text/template">
+    <div  >
+        <div style="float:right; width:34px;">
+            <span class="selectcheck <%= Checked ? 'icon-positive' : 'icon-inactive' %>" >
+                <i class="fa fa-check fa-3x"></i>
+            </span>
+        </div>
+
+
+        <div  class="listItem">
+            <span class="important"><%= Name %></span><br />
+            <span ><%= Asset_Class__c %></span><br />
+            <span ><%= Asset_Sub_Class__c %></span><br />
+            
+        </div>
+      
+        <div style="clear:both" />
+    
+    </div>
+</script>
+<!-- --------------------------------------- Capability Meeting list item Template ------------------------------------------ -->
+<script id="capabilitymeeting-list-item" type="text/template">
+    <div  >
+
+        <div style="float:right; width:34px;">
+            <span id="deleteObj" class="<%= __locally_deleted__ ? 'icon-negative' : 'icon-inactive' %>">
+            <i class="fa fa-times fa-3x"></i>
+            </span>
+        
+        </div>
+
+        <div class="listItem">
+            <span class="important"><%= Capability__r.Name %></span><br />
+            <span ><%= Capability__r.Asset_Class__c %></span><br />
+            <span ><%= Capability__r.Asset_Sub_Class__c %></span><br />
+
+       </div>
+      
+    
+    </div>
+</script>
+<!-- --------------------------------------- Capability Meeting list item Template for SYNC PAGE ------------------------------------------ -->
+<script id="capabilitymeeting-list-item-sync" type="text/template">
+    <div  >
+        <div class="listItem">
+            <span class="important"><%= Capability__r.Name %></span><br />
+            <span ><%= Capability__r.Asset_Class__c %></span><br />
+            <span ><%= Capability__r.Asset_Sub_Class__c %></span><br />
+
+        </div>
+    
+    </div>
+</script>
+
+<!-- Capabilities Templates END -->
+
+
+<!-- --------------------------------------- Client Portfolio list item Template ------------------------------------------ -->
+<script id="clientportfolio-list-item" type="text/template">
+    <div  >
+        <div style="float:right; width:34px;">
+            <span class="selectcheck <%= Checked ? 'icon-positive' : 'icon-inactive' %>" >
+                <i class="fa fa-check fa-3x"></i>
+            </span>
+        </div>
+
+
+        <div  class="listItem">
+            <span class="important"><%= Name %></span><br />
+            <span ><%= Scheme_Name__c %></span><br />
+            
+            <% if (Market_Value_GBP__c != null && Market_Value_GBP__c != 0 ) { %>
+            <span class="not-important">GBP <%= numeral(Market_Value_GBP__c).format('(0.00a)') %></span><br />
+            <% } %>
+
+            <% if (Base_Currency__c != 'GBP' && Market_Value_Base_Currency__c != null && Market_Value_Base_Currency__c != 0 ) { %>
+            <span class="not-important"><%= Base_Currency__c %> <%= numeral(Market_Value_Base_Currency__c).format('(0.00a)') %></span><br />
+            <% } %>
+        </div>
+      
+    
+    </div>
+</script>
+<!-- --------------------------------------- Portfolio Meeting list item Template ------------------------------------------ -->
+<script id="portfoliomeeting-list-item" type="text/template">
+    <div  >
+        <div style="float:right; width:34px;">
+        
+
+            <span id="deleteObj" class="<%= __locally_deleted__ ? 'icon-negative' : 'icon-inactive' %>">
+                <i class="fa fa-times fa-3x"></i>
+            </span>
+    
+        </div>
+
+
+        <div class="listItem">
+            <span class="important"><%= Client_Portfolio__r.Name %></span><br />
+            <span ><%= Client_Portfolio__r.Scheme_Name__c %></span><br />
+            
+            <% if (Client_Portfolio__r.Market_Value_GBP__c != null && Client_Portfolio__r.Market_Value_GBP__c != 0 ) { %>
+            <span class="not-important">GBP <%= numeral(Client_Portfolio__r.Market_Value_GBP__c).format('(0.00a)') %></span><br />
+            <% } %>
+
+            <% if (Client_Portfolio__r.Base_Currency__c != 'GBP' && Client_Portfolio__r.Market_Value_Base_Currency__c != null && Client_Portfolio__r.Market_Value_Base_Currency__c != 0 ) { %>
+            <span class="not-important"><%= Client_Portfolio__r.Base_Currency__c %> <%= numeral(Client_Portfolio__r.Market_Value_Base_Currency__c).format('(0.00a)') %></span><br />
+            <% } %>
+
+        </div>
+        <div style="clear:both" />
+      
+    
+    </div>
+</script>
+<!-- --------------------------------------- Portfolio Meeting list item Template for SYNC PAGE ------------------------------------------ -->
+<script id="portfoliomeeting-list-item-sync" type="text/template">
+    <div  >
+        <div style="float:right; width:34px;">
+
+        
+        </div>
+
+
+
+
+        <div  class="listItem">
+            <span class="important"><%= Client_Portfolio__r.Name %></span><br />
+            <span ><%= Client_Portfolio__r.Scheme_Name__c %></span><br />
+            
+            <% if (Client_Portfolio__r.Market_Value_GBP__c != null && Client_Portfolio__r.Market_Value_GBP__c != 0 ) { %>
+            <span class="not-important">GBP <%= numeral(Client_Portfolio__r.Market_Value_GBP__c).format('(0.00a)') %></span><br />
+            <% } %>
+
+            <% if (Client_Portfolio__r.Base_Currency__c != 'GBP' && Client_Portfolio__r.Market_Value_Base_Currency__c != null && Client_Portfolio__r.Market_Value_Base_Currency__c != 0 ) { %>
+            <span class="not-important"><%= Client_Portfolio__r.Base_Currency__c %> <%= numeral(Client_Portfolio__r.Market_Value_Base_Currency__c).format('(0.00a)') %></span><br />
+            <% } %>
+
+        </div>
+    
+    </div>
+</script>
+
+      <!--
+      
+      I dont know why these dont have a sync_failed field...
+      
+      <% if (__sync_failed__) { %>
+      <span class="count-negative">Failed to sync</span>
+      <% } else if (__local__) { %>
+      <span class="count-main">Locally<%= (__locally_created__ ? " created" : "") + (__locally_updated__ ? " updated" : "") + (__locally_deleted__ ? " deleted" : "") %></span>
+      <% } else { %>
+      <span class="count-positive">Cached</span>
+      <% } %>
+      -->
+
+
+
+
+
+
+<!-- --------------------------------------- Single select picklist Template -------------------------------------- -->
+
+<script id="picklist" type="text/template">
+    <select size="1" id="select-<%= fieldName %>" name="<%= fieldName %>">
+        <option value=""> -- none -- </option>
+        <% _(records).each(function(opt) { %>
+            <option value="<%= opt.value %>"  <% print(opt.value == selectedValue ? 'selected="selected"' : '') %> ><%= opt.label %></option>
+        <% }); %>
+    </select>
+</script>
+
+<!-- --------------------------------------- Online/Offline Toggler Template -------------------------------------- -->
+
+<script id="offline-toggler" type="text/template">
+  <!--a style="max-width:15%;text-overflow:ellipsis;overflow:hidden;white-space:nowrap" class="button-offline <%= isOnline ? 'button-positive' : 'button-negative' %>"><i class="fa fa-rss"></i> <%= (isOnline ? "Online" : "Offline") %></a-->
+  <a style="white-space:nowrap " class="button-offline <%= isOnline ? 'button-positive' : 'button-negative' %>"><i class="fa fa-rss"></i><%= jQuery(document).width() < 400 ? "" : (isOnline ? " Online" : " Offline") %></a>
+</script>
+<!-- --------------------------------------- GetSummaries button Template -------------------------------------- -->
+
+<script id="get-summaries" type="text/template">
+  <a class="button-next">Get Summaries</a>
+</script>
+
+<!-- --------------------------------------- Sync Page Template --------------------------------------------------- -->
+
+<script id="sync-page" type="text/template">
+  <header class="bar-title">
+    <a class="button-prev">Back</a>
+    <h1 class="title">Sync</h1>
+  </header>
+
+  <footer class="bar-footer">
+    <span class="button-positive">Online</span>
+  </footer>
+
+  <div class="bar-standard bar-header-secondary">
+    <a class="button button-block button-positive sync">Click to process <%= countLocallyModified %> records</a>
+  </div>
+
+  <div class="content">
+    <ul class="list"></ul>
+  </div>
+</script>
+
+<!-- --------------------------------------- Meeting list item Template ------------------------------------------ -->
+<script id="meeting-list-item" type="text/template">
+    
+
+
+<div >
+    
+    <div style="float:right; width:44px;">
+        <% if (Primary_Contact__r && Primary_Contact__r.Account) { %>
+        <span style="padding-right:5px" class="selectcheck <%= Checked ? 'icon-positive' : 'icon-inactive' %>" >
+            <i class="fa fa-envelope fa-3x"></i>
+        </span>
+        <% } %>
+    </div>
+    
+    <a href="#edit/meeting/<%= Id %>" style="color:#000">
+        <div class="listItem" >
+            <% if (Primary_Contact__r) { %>
+            <span class="important"><%= Primary_Contact__r.Name %></span>,
+            <%= Primary_Contact__r.Account.Name %><br/>
+            <%= Nice_Start_Date_Time__c %><br/>
+            <span class="not-important"><%= Name %></span><br/>
+            <!-- if is in the past and not recorded the notes yet, highlight it -->
+            <span class="not-important <%=  (!Meeting_Notes__c) && (moment().isAfter(moment(Start_Date_Time__c)))  ? 'alpha-em' : '' %> ">
+                <!-- either the Key Insights or 'please tell about KI' -->
+                <% if (Meeting_Notes__c) { %> <%=Meeting_Notes__c %>
+                <% } else { %>
+                Remember to record Key Insights
+                <% } %>
+                
+                
+            </span><br/>
+            <% } else { %>
+            <span class="important"><%= Name %></span>,<br/>
+            <%= Nice_Start_Date_Time__c %>
+            
+            <% } %>
+      
+      <!-- -- >
+      <% if (__sync_failed__) { %>
+      <span class="count-negative">Failed to sync</span>
+      <% } else if (__local__) { %>
+      <span class="count-main">Locally<%= (__locally_created__ ? " created" : "") + (__locally_updated__ ? " updated" : "") + (__locally_deleted__ ? " deleted" : "") %></span>
+      <% } else { %>
+      <span class="count-positive">Cached</span>
+      <% } %>
+      <! -- -->
+    
+        </div>
+</a>
+</div>
+
+
+</script>
+
+<!-- --- Meeting list date separator template ---------- -->
+<script id="meeting-list-separator" type="text/template">
+<div class="listItem separator">
+    <span class="important <%= IsToday ? 'IsToday' : '' %>"><%= MeetingDate %></span>
+</div>
+</script>
+
+<!-- --------------------------------------- Add/edit Meeting page template -------------------------------------- -->
+<script id="edit-meeting-page" type="text/template">
+  <header class="bar-title">
+    <a class="button-prev">Back</a>
+    <h1 class="title">Meeting Details</h1>
+    <!-- a class="button-next goToProducts">Products</a -->
+  </header>
+  
+  
+  
+<nav class="bar-tab" id="navbartab">
+    <span id="offlineStatus"></span>
+    <a href="#products/<%= Id %>" class=" alpha-button-next goToProducts"><%= jQuery(document).width() < 400 ? "Ports" : "Portfolios" %></a>
+    <a href="#capabilities/<%= Id %>" class=" alpha-button-next goToCapabilities"><%= jQuery(document).width() < 400 ? "Caps" : "Capabilities" %></a>
+    <a href="#funds/<%= Id %>" class=" alpha-button-next goToFunds">Funds</a>
+    <a href="#opportunities/<%= Id %>" class=" alpha-button-next goToOpportunities"><%= jQuery(document).width() < 400 ? "Opps" : "Opportunities" %></a>
+    
+</nav>
+
+
+
+  <div class="content " id="mostcontent" >
+    <div class="content-padded">
+
+      <% if (__local__) { %>
+      <span class="count-main">Locally<%= (__locally_created__ ? " created" : "") + (__locally_updated__ ? " updated" : "") + (__locally_deleted__ ? " deleted" : "") %></span><br/><br/>
+      <% } %>
+
+     <div class="info-group">
+     
+        <!-- if it doesnt have a primary contact, it isnt a meeting. -->
+     
+        <h2><%= Primary_Contact__r.Name %></h2>
+        <ul>
+            <li><%= Name %></li>
+            <li><%= Primary_Contact__r.Account.Name %></li>
+            <li><a href="mailto:<%= Primary_Contact__r.Email %>"><%= Primary_Contact__r.Email %></a></li>
+            <li><%= Primary_Contact__r.Phone %></li>
+            
+            <li><%= Nice_Start_Date_Time__c %></li>
+        </ul>
+     </div>
+     <div class="input-group" >
+
+        <div id="meetingNote">
+          <label>Key Insights</label>
+          <textarea placeholder="Key Insights"
+                    maxlength="255"
+                    name="Meeting_Notes__c"
+                    id="Meeting_Notes__c"><%= Meeting_Notes__c %></textarea>
+          <span class="error" id="meetingNoteError" />
+             
+          
+           <% print("<sc" + "ript type='text/javascript'>"); %>
+
+                $("textarea").autosize();
+                $("textarea").trigger('autosize.resize');
+
+            <% print("</sc"+"ript>"); %>
+          
+        </div>
+        
+    
+      
+        <div id="meetingType">
+          <label>Meeting Type</label>
+          <span id="meetingtype-picklist"></span>
+          <span class="error" id="meetingTypeError" />
+        </div>
+        
+        <div id="meetingBreakthrough">
+          <label>Breakthrough Meeting?</label>
+          <select size="1" name="Meeting_Breakthrough__c" id="Meeting_Breakthrough__c" >
+            <option value="false" <% print(Meeting_Breakthrough__c ? '' : 'selected="selected"') %>  >No</option>
+            <option value="true" <% print(Meeting_Breakthrough__c ? 'selected="selected"' : '') %> >Yes</option>
+          </select>
+          <span class="error" id="meetingBreakthroughError" />
+        </div>
+      
+     </div>
+        
+
+      <br />
+      <a class="button save">Save</a>
+      <a class="button merge">Merge</a>
+      <a class="button overwrite">Overwrite</a>
+    </div>
+  </div>
+  
+  
+</script>
+
+
+<!-- this is sfdc footer
+
+and it OVERLAYS page content BEHIND IT which is USELESS
+
+  <footer class="bar-footer">
+    <span id="offlineStatus"></span>
+    
+    <a class="button-next goToProducts">Products</a>
+    <a class="button-next goToOpps">Opportunities</a>
+  </footer>
+
+-->
+<!-- this is sfdc footer
+rejigged to use nav instead of footer. is it still USELESS?
+no it functions as a footer. what we really want now is 
+icons so we can make the icon bar
+
+<nav class="bar-tab">
+    <span id="offlineStatus"></span>
+    
+    <a class="button-next goToProducts">Products</a>
+</nav>
+
+-->
+
+<!--
+this overlays the header bar so is basically useless
+<nav class="bar-standard">
+  <ul class="segmented-controller">
+    <li class="active">
+      <a href="#">Meeting</a>
+    </li>
+    <li>
+      <a href="#">Products</a>
+    </li>
+    
+  </ul>
+</nav>
+
+-->
+
+
+<!--
+this is better than the Online button but it needs icons...
+<nav class="bar-tab">
+  <ul class="tab-inner">
+    <li class="tab-item active">
+      <a href="#">
+        <img class="tab-icon" src="img/icon-home.png">
+        <div class="tab-label">Label</div>
+      </a>
+    </li>
+    <li class="tab-item">
+      <a href="#">
+        <img class="tab-icon" src="img/icon-profile.png">
+        <div class="tab-label">Label</div>
+      </a>
+    </li>
+    <li class="tab-item">
+      <a href="#">
+        <img class="tab-icon" src="img/icon-messages.png">
+        <div class="tab-label">Label</div>
+      </a>
+    </li>
+    <li class="tab-item">
+      <a href="#">
+        <img class="tab-icon" src="img/icon-hamburger.png">
+        <div class="tab-label">Label</div>
+      </a>
+    </li>
+    <li class="tab-item">
+      <a href="#">
+        <img class="tab-icon" src="img/icon-settings.png">
+        <div class="tab-label">Label</div>
+      </a>
+    </li>
+  </ul>
+</nav>
+
+-->
+
+
+
+<!--
+<div id="meetingBreakthrough">
+          <label>Breakthrough Meeting?</label>
+          <input type="checkbox"  value="true" name="Meeting_Breakthrough__c" <% print(Meeting_Breakthrough__c ? 'checked="checked"' : '') %>   />
+          <span class="error" id="meetingBreakthroughError" />
+        </div>
+-->
+    
+    <script>
+
+/** Capabilities models **/
+
+
+app.models.Capability__c = Force.SObject.extend({
+    alphaModelName : "Capabilities__c",
+    alphaDescriptor : "Capabilities__c",
+    sobjectType: "Capabilities__c",
+    fieldlist: function(method) { 
+        return method == "read" 
+            ? ["Id", "Name", "Asset_Class__c","Owner.Name", "LastModifiedBy.Name", "LastModifiedDate"
+                ,"Asset_Sub_Class__c"
+            ]
+            : ["Id"]; //we're never going to write this stuff
+    },
+    cache: function() { return app.Capability__ccache;},
+    //cacheForOriginals: function() { return app.cacheForOriginals;},
+    cacheMode: function(method) {
+        if (!app.offlineTracker.get("isOnline")) {
+            return Force.CACHE_MODE.CACHE_ONLY;
+        }
+        else {
+            return (method == "read" ? Force.CACHE_MODE.CACHE_FIRST : Force.CACHE_MODE.SERVER_FIRST);
+        }
+    }
+});
+
+// The Capability__cCollection Model
+app.models.Capability__cCollection = Force.SObjectCollection.extend({
+    model: app.models.Capability__c,
+    alphaDescriptor : "Capability__cCollection",
+    fieldlist: ["Id", "Name", "Asset_Class__c","Owner.Name", "LastModifiedBy.Name", "LastModifiedDate"
+                ,"Asset_Sub_Class__c"
+            ],
+    cache: function() { return app.Capability__ccache},
+    //cacheForOriginals: function() { return app.cacheForOriginals;},
+
+    getCriteria: function() {
+        return this.key;
+    },
+
+    setCriteria: function(key) {
+        this.key = key;
+    },
+
+    config: function() {
+        // Offline: do a cache query
+        if (!app.offlineTracker.get("isOnline")) {
+console.log("doing config for Capability__c cache query. wth.");
+console.log("the offline query is running but in online fetchfromserver")
+            // Not using like query because it does a case-sensitive sort
+            return {type:"cache", cacheQuery:{queryType:"smart",
+                smartSql:"SELECT {capabilities:_soup} FROM {capabilities} "
+                          + (this.key == null ? "" : " WHERE {capabilities:Name} LIKE '%" + this.key + "%' ")
+                          + " ORDER BY LOWER({capabilities:Name})", pageSize:25}};
+        }
+        // Online
+        else {
+            // First time: do a SOQL - I own It query
+            if (this.key == null || this.key == '') {
+                //return {type:"mru", sobjectType:"Capability__c", fieldlist: this.fieldlist, orderBy:"LastModifiedDate", orderDirection:"DESC"};
+                return {type:"soql", query:"SELECT " + this.fieldlist.join(",") + " FROM Capabilities__c "
+                       
+                            + " WHERE OwnerId = '" + Force.creds.userId + "' AND Capability_Inactive__c = false "
+                        
+                        + " ORDER BY Name LIMIT 250"};
+            
+            
+            
+            }
+            // Other times: do a SOQL query
+            else {
+            
+            //MRU query doesnt make much sense here does it?
+                return {type:"soql", query:"SELECT " + this.fieldlist.join(",") + " FROM Capabilities__c  WHERE "
+                        + (this.key != null ? " Name LIKE '%" + this.key + "%' AND " : "")
+                        + " Capability_Inactive__c = false "
+                        
+                        + " ORDER BY Name LIMIT 25"};
+            }
+        }
+    }
+});
+app.models.Capability_Meeting__c = Force.SObject.extend({
+    sobjectType: "Capability_Meeting__c",
+    alphaDescriptor : "Capability_Meeting__c",
+    fieldlist: function(method) { 
+        return method == "read" 
+            ? ["Id", "Capability__c", "Capability__r.Name", "Meeting__c", "LastModifiedBy.Name", "LastModifiedDate"
+                ,"Capability__r.Asset_Class__c", "Capability__r.Asset_Sub_Class__c" ]
+            : (
+                method == "update" ? ["Id" ] : ["Id", "Capability__c", "Meeting__c" ]
+            );
+    },
+    cache: function() { return app.Capability_Meeting__ccache},
+    cacheForOriginals: function() { return app.Capability_Meeting__corigcache;},
+
+    
+    cacheMode: function(method) {
+        if (!app.offlineTracker.get("isOnline")) {
+            return Force.CACHE_MODE.CACHE_ONLY;
+        }
+        else {
+            return (method == "read"
+                    ? Force.CACHE_MODE.CACHE_FIRST
+                    : Force.CACHE_MODE.SERVER_FIRST);
+                    
+                    
+                    /**
+                    //it doesnt like this at all. because then they stay "locally updated" forever
+                    //and demand to be synced to the server, even though there is no reason to sync them
+                    : (method == "update" ? Force.CACHE_MODE.CACHE_ONLY : Force.CACHE_MODE.SERVER_FIRST));
+                    //you can't update one of these, right?
+                    **/
+        }
+    }
+});
+
+// The Capability Meeting Collection Model
+app.models.Capability_Meeting__cCollection = Force.SObjectCollection.extend({
+    model: app.models.Capability_Meeting__c,
+    alphaDescriptor : "Capability_Meeting__cCollection",
+    fieldlist: ["Id", "Capability__c", "Capability__r.Name", "Meeting__c", "LastModifiedBy.Name", "LastModifiedDate"
+                 ,"Capability__r.Asset_Class__c", "Capability__r.Asset_Sub_class__c" ],
+    cache: function() { return app.Capability_Meeting__ccache},
+    cacheForOriginals: function() { return app.Capability_Meeting__corigcache;},
+    //meetingId: null,
+    
+
+    getCriteria: function() {
+        return this.key;
+    },
+
+    setCriteria: function(key) {
+        this.key = key;
+    },
+
+    config: function() {
+        // Offline: do a cache query
+        if (!app.offlineTracker.get("isOnline")) {
+            // Not using like query because it does a case-sensitive sort
+            return {type:"cache", cacheQuery:{queryType:"smart",
+                    smartSql:"SELECT {capabilitymeetings:_soup} FROM {capabilitymeetings} "
+                             + "WHERE {capabilitymeetings:Meeting__c} = '" + app.meeting.get("Id") + "' "
+                             + (this.key != null && this.key != ""
+                                ? " AND {capabilitymeetings:Capability__r.Name} LIKE '%" + this.key + "%' "
+                                : "")
+                             + " ORDER BY LOWER({capabilitymeetings:Capability__r.Name})", pageSize:25}};
+        }
+        // Online
+        else {
+console.log('online query for cap meet');
+            return {type:"soql",
+                query:"SELECT " + this.fieldlist.join(",")
+                    + " FROM Capability_Meeting__c WHERE "
+                    + " Meeting__c = '" + app.meeting.get("Id") + "' "
+                    + (this.key == null
+                        ? ""
+                        : " AND Capability__r.Name LIKE '%" + this.key + "%' ")
+                    + " ORDER BY Capability__r.Name LIMIT 25"};
+        }
+    }
+});
+/** Capabilities models END **/
+
+
+
+/** Capabilities views **/
+
+
+app.views.CapabilityListItemView = Backbone.View.extend({
+
+    
+    events: {
+        "click .selectcheck": "setChecked"
+    },
+    tagName: "li",
+    template: _.template($("#capability-list-item").html()),
+    render: function(eventName) {
+    
+   
+        $(this.el).html(this.template(_.extend({MeetingId: function(){lid = ''; try {lid = app.meeting.get("Id");} catch(e){}; return lid; }, //app.meeting.get("Id"),
+                                                Checked: false},this.model.toJSON())));
+        
+        
+        return this;
+    },
+
+    close: function() {
+        this.remove();
+        this.off();
+    },
+    
+    setChecked: function(event)
+    {
+console.log("setChecked ran. is this the checkbox? what's the model here?") ;
+console.log("was a: " + event.target.id);
+        //if (event.target.checked) this.model.set("Checked",true);
+        //else this.model.set("Checked",false);
+        this.model.set("Checked",!this.model.get("Checked"));
+console.log(this.model.get("Name") + ':' + this.model.get("Checked"));
+        return this.render();
+    }
+    
+})
+
+app.views.CapabilityMeetingListItemSyncView = Backbone.View.extend({
+
+    tagName: "li",
+    template: _.template($("#capabilitymeeting-list-item-sync").html()),
+    render: function(eventName) {
+console.log(' CMLI sync ' + this.model.toJSON());
+        $(this.el).html(this.template(this.model.toJSON()));
+        
+        return this;
+    },
+    close: function() {
+        this.remove();
+        this.off();
+    },
+});
+
+
+app.views.CapabilityMeetingListItemView = Backbone.View.extend({
+
+    tagName: "li",
+    template: _.template($("#capabilitymeeting-list-item").html()),
+
+
+    events: {
+        "click #deleteObj": "deleteObj"
+    },
+    
+    
+    //intialize: function(){
+    //    this.model.on("change", this.render, this);
+    //},
+    
+    
+    render: function(eventName) {
+    
+        //this.Nice_Start_Date_Time__c = moment(this.model.attributes.Start_Date_Time__c).calendar();
+        //var templateData = _.extend({__sync_failed__:false, "Nice_Start_Date_Time__c":this.Nice_Start_Date_Time__c}, this.model.toJSON());
+        
+//console.log(' - > - > rendereing MeetingListItemView ' + templateData);
+        
+console.log(' CPL 01 ' + this.model.toJSON());
+        $(this.el).html(this.template(_.extend({MeetingId: app.meeting.get("Id")},this.model.toJSON())));
+        
+
+//console.log(' - > - > rendered MeetingListItemView ' + templateData);
+        
+        return this;
+    },
+    
+    deleteObj: function(eventN) {
+  
+        this.model.set("__locally_deleted__",!this.model.get("__locally_deleted__"));
+        return this.render();
+    },
+
+    close: function() {
+        this.remove();
+        this.off();
+    }
+
+ 
+    
+});
+/** Capabilities views END **/
+
+
+/** Opportunity Models **/
+
+/** Opportunity **/
+app.models.Opportunity = Force.SObject.extend({
+    alphaModelName : "Opportunity",
+    alphaDescriptor : "Opportunity",
+    sobjectType: "Opportunity",
+    fieldlist: function(method) { 
+        return method == "read" 
+            ? ["Id", "Name", "Owner.Name", "LastModifiedBy.Name", "LastModifiedDate"
+                ,"Account.Name","Amount", "CurrencyIsoCode", "Capability_Name__c","StageName","CloseDate"
+            ]
+            : ["Id"]; //we're never going to write this stuff
+    },
+    cache: function() { return app.Opportunitycache;},
+    //cacheForOriginals: function() { return app.cacheForOriginals;},
+    cacheMode: function(method) {
+        if (!app.offlineTracker.get("isOnline")) {
+            return Force.CACHE_MODE.CACHE_ONLY;
+        }
+        else {
+            return (method == "read" ? Force.CACHE_MODE.CACHE_FIRST : Force.CACHE_MODE.SERVER_FIRST);
+        }
+    }
+});
+/** Opportunity Collection **/
+app.models.OpportunityCollection = Force.SObjectCollection.extend({
+    model: app.models.Opportunity,
+    alphaDescriptor : "OpportunityCollection",
+    fieldlist: ["Id", "Name", "Owner.Name", "LastModifiedBy.Name", "LastModifiedDate"
+                ,"Account.Name","Amount", "CurrencyIsoCode", "Capability_Name__c","StageName","CloseDate"
+            ],
+    cache: function() { return app.Opportunitycache},
+    //cacheForOriginals: function() { return app.cacheForOriginals;},
+
+    getCriteria: function() {
+        return this.key;
+    },
+
+    setCriteria: function(key) {
+        this.key = key;
+    },
+
+    config: function() {
+        // Offline: do a cache query
+        if (!app.offlineTracker.get("isOnline")) {
+
+            // Not using like query because it does a case-sensitive sort
+            return {type:"cache", cacheQuery:{queryType:"smart",
+                smartSql:"SELECT opportunities:_soup} FROM {opportunities} "
+                          + (this.key == null ? "" : " WHERE {opportunities:Name} LIKE '%" + this.key + "%' ")
+                          + " ORDER BY LOWER({opportunities:Account.Name})", pageSize:25}};
+        }
+        // Online
+        else {
+            //always use "I own it and it is not closed"
+            
+            if (this.key == null || this.key == '') {
+                return {type:"soql", query:"SELECT " + this.fieldlist.join(",") + " FROM Opportunity "
+                       
+                        + " WHERE OwnerId = '" + Force.creds.userId + "' "
+                        + " AND (NOT IsClosed = true) "
+                        
+                        + " ORDER BY Account.Name LIMIT 250"};
+            
+            
+            
+            }
+            // Other times: do a SOQL query
+            else {
+            
+            //MRU query doesnt make much sense here does it?
+                return {type:"soql", query:"SELECT " + this.fieldlist.join(",") + " FROM Opportunity "
+                       
+                        + " WHERE OwnerId = '" + Force.creds.userId + "' "
+                        + " AND (NOT IsClosed = true) "
+                        
+                        + (this.key != null ? " AND Name LIKE '%" + this.key + "%' " : "")
+                        
+                        + " ORDER BY Account.Name LIMIT 250"};
+            }
+        }
+    }
+});
+/** Opportunity Meeting **/
+app.models.Opportunity_Meeting__c = Force.SObject.extend({
+    sobjectType: "Opportunity_Meeting__c",
+    alphaDescriptor : "Opportunity_Meeting__c",
+    fieldlist: function(method) { 
+        return method == "read" 
+            ? ["Id", "Opportunity__c", "Opportunity__r.Name", "Meeting__c", "LastModifiedBy.Name", "LastModifiedDate"
+                ,"Opportunity__r.Account.Name","Opportunity__r.Amount", "Opportunity__r.CurrencyIsoCode", "Opportunity__r.Capability_Name__c","Opportunity__r.StageName","Opportunity__r.CloseDate"]
+            : (
+                method == "update" ? ["Id"] : ["Id", "Opportunity__c", "Meeting__c" ]
+            );
+    },
+    cache: function() { return app.Opportunity_Meeting__ccache},
+    cacheForOriginals: function() { return app.Opportunity_Meeting__corigcache;},
+
+    
+    cacheMode: function(method) {
+        if (!app.offlineTracker.get("isOnline")) {
+            return Force.CACHE_MODE.CACHE_ONLY;
+        }
+        else {
+            return (method == "read" ? Force.CACHE_MODE.CACHE_FIRST : Force.CACHE_MODE.SERVER_FIRST);
+        }
+    }
+});
+/** Opportunity Meeting Collection **/
+app.models.Opportunity_Meeting__cCollection = Force.SObjectCollection.extend({
+    model: app.models.Opportunity_Meeting__c,
+    alphaDescriptor : "Opportunity_Meeting__cCollection",
+    fieldlist: ["Id", "Opportunity__c", "Opportunity__r.Name", "Meeting__c", "LastModifiedBy.Name", "LastModifiedDate"
+                ,"Opportunity__r.Account.Name","Opportunity__r.Amount", "Opportunity__r.CurrencyIsoCode", "Opportunity__r.Capability_Name__c","Opportunity__r.StageName","Opportunity__r.CloseDate"],
+    cache: function() { return app.Opportunity_Meeting__ccache},
+    cacheForOriginals: function() { return app.Opportunity_Meeting__corigcache;},
+    //meetingId: null,
+    
+
+    getCriteria: function() {
+        return this.key;
+    },
+
+    setCriteria: function(key) {
+        this.key = key;
+    },
+
+    config: function() {
+        // Offline: do a cache query
+        if (!app.offlineTracker.get("isOnline")) {
+            // Not using like query because it does a case-sensitive sort
+            return {type:"cache", cacheQuery:{queryType:"smart",
+                    smartSql:"SELECT {opportunitymeetings:_soup} FROM {opportunitymeetings} "
+                             + "WHERE {opportunitymeetings:Meeting__c} = '" + app.meeting.get("Id") + "' "
+                             + (this.key != null && this.key != ""
+                                ? " AND {opportunitymeetings:Opportunity__r.Name} LIKE '%" + this.key + "%' "
+                                : "")
+                             + " ORDER BY LOWER({opportunitymeetings:Opportunity__r.Account.Name})", pageSize:25}};
+        }
+        // Online
+        else {
+            return {type:"soql",
+                query:"SELECT " + this.fieldlist.join(",")
+                    + " FROM Opportunity_Meeting__c WHERE "
+                    + " Meeting__c = '" + app.meeting.get("Id") + "' "
+                    + (this.key == null
+                        ? ""
+                        : " AND Opportunity__r.Name LIKE '%" + this.key + "%' ")
+                    + " ORDER BY Opportunity__r.Account.Name LIMIT 25"};
+        }
+    }
+});
+
+
+/** All Opportunity Meetings Collection **/
+app.models.Opportunity_Meeting__cAllCollection = Force.SObjectCollection.extend({
+    model: app.models.Opportunity_Meeting__c,
+    alphaDescriptor : "Opportunity_Meeting__cCollection",
+    
+    fieldlist: ["Id", "Opportunity__c", "Opportunity__r.Name", "Meeting__c", "LastModifiedBy.Name", "LastModifiedDate"
+                ,"Opportunity__r.Account.Name","Opportunity__r.Amount", "Opportunity__r.CurrencyIsoCode", "Opportunity__r.Capability_Name__c","Opportunity__r.StageName","Opportunity__r.CloseDate"],
+    cache: function() { return app.Opportunity_Meeting__ccache},
+    cacheForOriginals: function() { return app.Opportunity_Meeting__corigcache;},
+    config: function(){
+    // Offline: do a cache query
+        if (!app.offlineTracker.get("isOnline")) {
+            // Not using like query because it does a case-sensitive sort
+            return {type:"cache", cacheQuery:{queryType:"smart",
+                    smartSql:"SELECT {opportunitymeetings:_soup} FROM {opportunitymeetings} "
+                             //+ "WHERE {portfoliomeetings:Meeting__c} = '" + app.meeting.get("Id") + "' "
+                             //+ (this.key != null && this.key != ""
+                             //   ? " AND {portofoliomeetings:Client_Portfolio__r.Name} LIKE '" + this.key + "%' "
+                             //   : "")
+                             + " ORDER BY LOWER({opportunitymeetings:Opportunity__r.Account.Name})", pageSize:25}};
+        }
+        // Online
+        else {
+            return {type:"soql",
+                query:"SELECT " + this.fieldlist.join(",")
+                    + " FROM Opportunity_Meeting__c WHERE "
+                    + " Meeting__c IN ('" + app.searchResults.pluck("Id").join("','") + "') "
+                    + " ORDER BY Opportunity__r.Account.Name LIMIT 250"};
+        }
+    },
+    
+    cacheMode: function(method) {
+        if (!app.offlineTracker.get("isOnline")) {
+            return Force.CACHE_MODE.CACHE_ONLY;
+        }
+        else {
+            return Force.CACHE_MODE.SERVER_FIRST;
+        }
+    }
+
+});
+
+
+/** Opportunity Models END **/
+
+
+/** Fund Models **/
+/** Fund **/
+app.models.Pooled_Fund__c = Force.SObject.extend({
+    alphaModelName : "Pooled_Fund__c",
+    alphaDescriptor : "Pooled_Fund__c",
+    sobjectType: "Pooled_Fund__c",
+    fieldlist: function(method) { 
+        return method == "read" 
+            ? ["Id", "Name", "Capability2__c","Owner.Name", "LastModifiedBy.Name", "LastModifiedDate"
+                ,"Fund_Domicile__r.Name", "Market_Value_GBP__c", "Market_Value_Base_Currency__c","Base_Currency__c"
+            ]
+            : ["Id"]; //we're never going to write this stuff
+    },
+    cache: function() { return app.Pooled_Fund__ccache;},
+    //cacheForOriginals: function() { return app.cacheForOriginals;},
+    cacheMode: function(method) {
+        if (!app.offlineTracker.get("isOnline")) {
+            return Force.CACHE_MODE.CACHE_ONLY;
+        }
+        else {
+            return (method == "read" ? Force.CACHE_MODE.CACHE_FIRST : Force.CACHE_MODE.SERVER_FIRST);
+        }
+    }
+});
+/** Fund Collection **/
+app.models.Pooled_Fund__cCollection = Force.SObjectCollection.extend({
+    model: app.models.Pooled_Fund__c,
+    alphaDescriptor : "Pooled_Fund__cCollection",
+    fieldlist: ["Id", "Name", "Capability2__c","Owner.Name", "LastModifiedBy.Name", "LastModifiedDate"
+                ,"Fund_Domicile__r.Name", "Market_Value_GBP__c", "Market_Value_Base_Currency__c","Base_Currency__c"
+            ],
+    cache: function() { return app.Pooled_Fund__ccache},
+    //cacheForOriginals: function() { return app.cacheForOriginals;},
+
+    getCriteria: function() {
+        return this.key;
+    },
+
+    setCriteria: function(key) {
+        this.key = key;
+    },
+
+    config: function() {
+        // Offline: do a cache query
+        if (!app.offlineTracker.get("isOnline")) {
+
+            // Not using like query because it does a case-sensitive sort
+            return {type:"cache", cacheQuery:{queryType:"smart",
+                smartSql:"SELECT pooledfunds:_soup} FROM {pooledfunds} "
+                          + (this.key == null ? "" : " WHERE {pooledfunds:Name} LIKE '%" + this.key + "%' ")
+                          + " ORDER BY LOWER({pooledfunds:Name})", pageSize:25}};
+        }
+        // Online
+        else {
+            // First time: do a SOQL - I own It query
+            if (this.key == null || this.key == '') {
+                //return {type:"mru", sobjectType:"Portfolio__c", fieldlist: this.fieldlist, orderBy:"LastModifiedDate", orderDirection:"DESC"};
+                return {type:"soql", query:"SELECT " + this.fieldlist.join(",") + " FROM Pooled_Fund__c "
+                       
+                            //+ " WHERE OwnerId = '" + Force.creds.userId + "' "
+                        
+                        + " ORDER BY Name LIMIT 250"};
+            
+            
+            
+            }
+            // Other times: do a SOQL query
+            else {
+            
+            //MRU query doesnt make much sense here does it?
+                return {type:"soql", query:"SELECT " + this.fieldlist.join(",") + " FROM Pooled_Fund__c "
+                        + (this.key != null ? " WHERE Name LIKE '%" + this.key + "%' " : "")
+                        
+                        + " ORDER BY Name LIMIT 25"};
+            }
+        }
+    }
+});
+/** Fund Meeting **/
+app.models.Internal_Fund_Meeting__c = Force.SObject.extend({
+    sobjectType: "Internal_Fund_Meeting__c",
+    alphaDescriptor : "Internal_Fund_Meeting__c",
+    fieldlist: function(method) { 
+        return method == "read" 
+            ? ["Id", "Internal_Fund__c", "Internal_Fund__r.Name", "Meeting__c", "LastModifiedBy.Name", "LastModifiedDate"
+                ,"Internal_Fund__r.Fund_Domicile__r.Name", "Internal_Fund__r.Market_Value_GBP__c", "Internal_Fund__r.Market_Value_Base_Currency__c","Internal_Fund__r.Base_Currency__c"]
+            : (
+                method == "update" ? ["Id"] : ["Id", "Internal_Fund__c", "Meeting__c" ]
+            );
+    },
+    cache: function() { return app.Internal_Fund_Meeting__ccache},
+    cacheForOriginals: function() { return app.Internal_Fund_Meeting__corigcache;},
+
+    
+    cacheMode: function(method) {
+        if (!app.offlineTracker.get("isOnline")) {
+            return Force.CACHE_MODE.CACHE_ONLY;
+        }
+        else {
+            return (method == "read" ? Force.CACHE_MODE.CACHE_FIRST : Force.CACHE_MODE.SERVER_FIRST);
+        }
+    }
+});
+/** Fund Meeting Collection **/
+app.models.Internal_Fund_Meeting__cCollection = Force.SObjectCollection.extend({
+    model: app.models.Internal_Fund_Meeting__c,
+    alphaDescriptor : "Internal_Fund_Meeting__cCollection",
+    fieldlist: ["Id", "Internal_Fund__c", "Internal_Fund__r.Name",  "Meeting__c", "LastModifiedBy.Name", "LastModifiedDate"
+                ,"Internal_Fund__r.Fund_Domicile__r.Name", "Internal_Fund__r.Market_Value_GBP__c", "Internal_Fund__r.Market_Value_Base_Currency__c","Internal_Fund__r.Base_Currency__c"],
+    cache: function() { return app.Internal_Fund__ccache},
+    cacheForOriginals: function() { return app.Internal_Fund__corigcache;},
+    //meetingId: null,
+    
+
+    getCriteria: function() {
+        return this.key;
+    },
+
+    setCriteria: function(key) {
+        this.key = key;
+    },
+
+    config: function() {
+        // Offline: do a cache query
+        if (!app.offlineTracker.get("isOnline")) {
+            // Not using like query because it does a case-sensitive sort
+            return {type:"cache", cacheQuery:{queryType:"smart",
+                    smartSql:"SELECT {internalfundmeetings:_soup} FROM {internalfundmeetings} "
+                             + "WHERE {internalfundmeetings:Meeting__c} = '" + app.meeting.get("Id") + "' "
+                             + (this.key != null && this.key != ""
+                                ? " AND {internalfundmeetings:Internal_Fund__r.Name} LIKE '%" + this.key + "%' "
+                                : "")
+                             + " ORDER BY LOWER({internalfundmeetings:Internal_Fund__r.Name})", pageSize:25}};
+        }
+        // Online
+        else {
+            return {type:"soql",
+                query:"SELECT " + this.fieldlist.join(",")
+                    + " FROM Internal_Fund_Meeting__c WHERE "
+                    + " Meeting__c = '" + app.meeting.get("Id") + "' "
+                    + (this.key == null
+                        ? ""
+                        : " AND Internal_Fund__r.Name LIKE '%" + this.key + "%' ")
+                    + " ORDER BY Internal_Fund__r.Name LIMIT 25"};
+        }
+    }
+});
+
+
+/** All Fund Meetings Collection **/
+app.models.Internal_Fund_Meeting__cAllCollection = Force.SObjectCollection.extend({
+    model: app.models.Internal_Fund_Meeting__c,
+    alphaDescriptor : "Internal_Fund_Meeting__cCollection",
+    fieldlist: ["Id", "Internal_Fund__c", "Internal_Fund__r.Name",  "Meeting__c", "LastModifiedBy.Name", "LastModifiedDate"
+                ,"Internal_Fund__r.Fund_Domicile__r.Name", "Internal_Fund__r.Market_Value_GBP__c", "Internal_Fund__r.Market_Value_Base_Currency__c","Internal_Fund__r.Base_Currency__c"],
+    cache: function() { return app.Internal_Fund_Meeting__ccache},
+    cacheForOriginals: function() { return app.Internal_Fund_Meeting__corigcache;},
+    config: function(){
+    // Offline: do a cache query
+        if (!app.offlineTracker.get("isOnline")) {
+            // Not using like query because it does a case-sensitive sort
+            return {type:"cache", cacheQuery:{queryType:"smart",
+                    smartSql:"SELECT {internalfundmeetings:_soup} FROM {internalfundmeetings} "
+                             //+ "WHERE {portfoliomeetings:Meeting__c} = '" + app.meeting.get("Id") + "' "
+                             //+ (this.key != null && this.key != ""
+                             //   ? " AND {portofoliomeetings:Client_Portfolio__r.Name} LIKE '" + this.key + "%' "
+                             //   : "")
+                             + " ORDER BY LOWER({internalfundmeetings:Internal_Fund__r.Name})", pageSize:25}};
+        }
+        // Online
+        else {
+            return {type:"soql",
+                query:"SELECT " + this.fieldlist.join(",")
+                    + " FROM Internal_Fund_Meeting__c WHERE "
+                    + " Meeting__c IN ('" + app.searchResults.pluck("Id").join("','") + "') "
+                    + " ORDER BY Internal_Fund__r.Name LIMIT 250"};
+        }
+    },
+    
+    cacheMode: function(method) {
+        if (!app.offlineTracker.get("isOnline")) {
+            return Force.CACHE_MODE.CACHE_ONLY;
+        }
+        else {
+            return Force.CACHE_MODE.SERVER_FIRST;
+        }
+    }
+
+});
+
+
+/**
+// Problem 1: The Product-Selecting Model = Portfolio (today)
+// 
+// the design challenge: we want to list products and sync meeting-products
+// how about never-save products, and complication to show meeting-products
+--> actually that sounds no bad. tick, tick, tick on products
+--> done = make models in meeting-product, slide back to meeting-product, allow save/cancel
+//
+--> having almost conquered apex-rest objects we could do that. but cracking standard seems the way to go
+**/
+app.models.Portfolio__c = Force.SObject.extend({
+    alphaModelName : "Portfolio__c",
+    alphaDescriptor : "Portfolio__c",
+    sobjectType: "Portfolio__c",
+    fieldlist: function(method) { 
+        return method == "read" 
+            ? ["Id", "Name", "Capability__c","Owner.Name", "LastModifiedBy.Name", "LastModifiedDate"
+                ,"Scheme_Name__c", "Market_Value_GBP__c", "Market_Value_Base_Currency__c","Base_Currency__c"
+            ]
+            : ["Id"]; //we're never going to write this stuff
+    },
+    cache: function() { return app.ClientPortfolio__ccache;},
+    //cacheForOriginals: function() { return app.cacheForOriginals;},
+    cacheMode: function(method) {
+        if (!app.offlineTracker.get("isOnline")) {
+            return Force.CACHE_MODE.CACHE_ONLY;
+        }
+        else {
+            return (method == "read" ? Force.CACHE_MODE.CACHE_FIRST : Force.CACHE_MODE.SERVER_FIRST);
+        }
+    }
+});
+
+// The Portfolio__cCollection Model
+app.models.Portfolio__cCollection = Force.SObjectCollection.extend({
+    model: app.models.Portfolio__c,
+    alphaDescriptor : "Portfolio__cCollection",
+    fieldlist: ["Id", "Name", "Capability__c","Owner.Name", "LastModifiedBy.Name", "LastModifiedDate"
+                ,"Scheme_Name__c", "Market_Value_GBP__c", "Market_Value_Base_Currency__c","Base_Currency__c"
+            ],
+    cache: function() { return app.ClientPortfolio__ccache},
+    //cacheForOriginals: function() { return app.cacheForOriginals;},
+
+    getCriteria: function() {
+        return this.key;
+    },
+
+    setCriteria: function(key) {
+        this.key = key;
+    },
+
+    config: function() {
+        // Offline: do a cache query
+        if (!app.offlineTracker.get("isOnline")) {
+console.log("doing config for Portfolio__c cache query. wth.");
+console.log("the offline query is running but in online fetchfromserver")
+            // Not using like query because it does a case-sensitive sort
+            return {type:"cache", cacheQuery:{queryType:"smart",
+                smartSql:"SELECT {clientportfolios:_soup} FROM {clientportfolios} "
+                          + (this.key == null ? "" : " WHERE {clientportfolios:Name} LIKE '%" + this.key + "%' ")
+                          + " ORDER BY LOWER({clientportfolios:Name})", pageSize:25}};
+        }
+        // Online
+        else {
+            // First time: do a SOQL - I own It query
+            if (this.key == null || this.key == '') {
+                //return {type:"mru", sobjectType:"Portfolio__c", fieldlist: this.fieldlist, orderBy:"LastModifiedDate", orderDirection:"DESC"};
+                return {type:"soql", query:"SELECT " + this.fieldlist.join(",") + " FROM Portfolio__c "
+                       
+                            + " WHERE OwnerId = '" + Force.creds.userId + "' "
+                        
+                        + " ORDER BY Name LIMIT 250"};
+            
+            
+            
+            }
+            // Other times: do a SOQL query
+            else {
+            
+            //MRU query doesnt make much sense here does it?
+                return {type:"soql", query:"SELECT " + this.fieldlist.join(",") + " FROM Portfolio__c "
+                        + (this.key != null ? " WHERE Name LIKE '%" + this.key + "%' " : "")
+                        
+                        + " ORDER BY Name LIMIT 25"};
+            }
+        }
+    }
+});
+app.models.Portfolio_Meeting__c = Force.SObject.extend({
+    sobjectType: "Portfolio_Meeting__c",
+    alphaDescriptor : "Portfolio_Meeting__c",
+    fieldlist: function(method) { 
+        return method == "read" 
+            ? ["Id", "Client_Portfolio__c", "Client_Portfolio__r.Name",  "Meeting__c", "LastModifiedBy.Name", "LastModifiedDate"
+                ,"Client_Portfolio__r.Scheme_Name__c", "Client_Portfolio__r.Market_Value_GBP__c", "Client_Portfolio__r.Market_Value_Base_Currency__c","Client_Portfolio__r.Base_Currency__c"]
+            : (
+                method == "update" ? ["Id"] : ["Id", "Client_Portfolio__c", "Meeting__c" ]
+            );
+    },
+    cache: function() { return app.Portfolio_Meeting__ccache},
+    cacheForOriginals: function() { return app.Portfolio_Meeting__corigcache;},
+
+    
+    cacheMode: function(method) {
+        if (!app.offlineTracker.get("isOnline")) {
+            return Force.CACHE_MODE.CACHE_ONLY;
+        }
+        else {
+            return (method == "read" ? Force.CACHE_MODE.CACHE_FIRST : Force.CACHE_MODE.SERVER_FIRST);
+        }
+    }
+});
+
+//the "all portfolio meetings for these meetings" collection model
+app.models.Portfolio_Meeting__cAllCollection = Force.SObjectCollection.extend({
+    model: app.models.Portfolio_Meeting__c,
+    alphaDescriptor : "Portfolio_Meeting__cCollection",
+    fieldlist: ["Id", "Client_Portfolio__c", "Client_Portfolio__r.Name", "Meeting__c", "LastModifiedBy.Name", "LastModifiedDate"
+                ,"Client_Portfolio__r.Scheme_Name__c", "Client_Portfolio__r.Market_Value_GBP__c", "Client_Portfolio__r.Market_Value_Base_Currency__c","Client_Portfolio__r.Base_Currency__c"],
+    cache: function() { return app.Portfolio_Meeting__ccache},
+    cacheForOriginals: function() { return app.Portfolio_Meeting__corigcache;},
+    config: function(){
+    // Offline: do a cache query
+        if (!app.offlineTracker.get("isOnline")) {
+            // Not using like query because it does a case-sensitive sort
+            return {type:"cache", cacheQuery:{queryType:"smart",
+                    smartSql:"SELECT {portfoliomeetings:_soup} FROM {portfoliomeetings} "
+                             //+ "WHERE {portfoliomeetings:Meeting__c} = '" + app.meeting.get("Id") + "' "
+                             //+ (this.key != null && this.key != ""
+                             //   ? " AND {portofoliomeetings:Client_Portfolio__r.Name} LIKE '" + this.key + "%' "
+                             //   : "")
+                             + " ORDER BY LOWER({portfoliomeetings:Client_Portfolio__r.Name})", pageSize:25}};
+        }
+        // Online
+        else {
+            return {type:"soql",
+                query:"SELECT " + this.fieldlist.join(",")
+                    + " FROM Portfolio_Meeting__c WHERE "
+                    + " Meeting__c IN ('" + app.searchResults.pluck("Id").join("','") + "') "
+                    + " ORDER BY Client_Portfolio__r.Name LIMIT 250"};
+        }
+    },
+    
+    cacheMode: function(method) {
+        if (!app.offlineTracker.get("isOnline")) {
+            return Force.CACHE_MODE.CACHE_ONLY;
+        }
+        else {
+            return Force.CACHE_MODE.SERVER_FIRST;
+        }
+    }
+
+});
+
+
+//the "all capaility meetings for these meetings" collection model
+app.models.Capability_Meeting__cAllCollection = Force.SObjectCollection.extend({
+    model: app.models.Capability_Meeting__c,
+    alphaDescriptor : "Capability_Meeting__cAllCollection",
+    fieldlist: ["Id", "Capability__c", "Capability__r.Name", "Meeting__c", "LastModifiedBy.Name", "LastModifiedDate"
+                 ,"Capability__r.Asset_Class__c", "Capability__r.Asset_Sub_class__c" ],
+    cache: function() { return app.Capability_Meeting__ccache},
+    cacheForOriginals: function() { return app.Capability_Meeting__corigcache;},
+    
+    config: function(){
+    // Offline: do a cache query
+        if (!app.offlineTracker.get("isOnline")) {
+            // Not using like query because it does a case-sensitive sort
+            return {type:"cache", cacheQuery:{queryType:"smart",
+                    smartSql:"SELECT {capabilitymeetings:_soup} FROM {capabilitymeetings} "
+                             //+ "WHERE {portfoliomeetings:Meeting__c} = '" + app.meeting.get("Id") + "' "
+                             //+ (this.key != null && this.key != ""
+                             //   ? " AND {portofoliomeetings:Client_Portfolio__r.Name} LIKE '" + this.key + "%' "
+                             //   : "")
+                             + " ORDER BY LOWER({capabilitymeetings:Capability__r.Name})", pageSize:25}};
+        }
+        // Online
+        else {
+            return {type:"soql",
+                query:"SELECT " + this.fieldlist.join(",")
+                    + " FROM Capability_Meeting__c WHERE "
+                    + " Meeting__c IN ('" + app.searchResults.pluck("Id").join("','") + "') "
+                    + " ORDER BY Capability__r.Name LIMIT 250"};
+        }
+    },
+    
+    cacheMode: function(method) {
+        if (!app.offlineTracker.get("isOnline")) {
+            return Force.CACHE_MODE.CACHE_ONLY;
+        }
+        else {
+            return Force.CACHE_MODE.SERVER_FIRST;
+        }
+    }
+
+});
+
+
+// The Portfolio Meeting Collection Model
+app.models.Portfolio_Meeting__cCollection = Force.SObjectCollection.extend({
+    model: app.models.Portfolio_Meeting__c,
+    alphaDescriptor : "Portfolio_Meeting__cCollection",
+    fieldlist: ["Id", "Client_Portfolio__c", "Client_Portfolio__r.Name", "Meeting__c", "LastModifiedBy.Name", "LastModifiedDate"
+                ,"Client_Portfolio__r.Scheme_Name__c", "Client_Portfolio__r.Market_Value_GBP__c", "Client_Portfolio__r.Market_Value_Base_Currency__c","Client_Portfolio__r.Base_Currency__c"],
+    cache: function() { return app.Portfolio_Meeting__ccache},
+    cacheForOriginals: function() { return app.Portfolio_Meeting__corigcache;},
+    //meetingId: null,
+    
+
+    getCriteria: function() {
+        return this.key;
+    },
+
+    setCriteria: function(key) {
+        this.key = key;
+    },
+
+    config: function() {
+        // Offline: do a cache query
+        if (!app.offlineTracker.get("isOnline")) {
+            // Not using like query because it does a case-sensitive sort
+            return {type:"cache", cacheQuery:{queryType:"smart",
+                    smartSql:"SELECT {portfoliomeetings:_soup} FROM {portfoliomeetings} "
+                             + "WHERE {portfoliomeetings:Meeting__c} = '" + app.meeting.get("Id") + "' "
+                             + (this.key != null && this.key != ""
+                                ? " AND {portofoliomeetings:Client_Portfolio__r.Name} LIKE '%" + this.key + "%' "
+                                : "")
+                             + " ORDER BY LOWER({portfoliomeetings:Client_Portfolio__r.Name})", pageSize:25}};
+        }
+        // Online
+        else {
+            return {type:"soql",
+                query:"SELECT " + this.fieldlist.join(",")
+                    + " FROM Portfolio_Meeting__c WHERE "
+                    + " Meeting__c = '" + app.meeting.get("Id") + "' "
+                    + (this.key == null
+                        ? ""
+                        : " AND Client_Portfolio__r.Name LIKE '%" + this.key + "%' ")
+                    + " ORDER BY Client_Portfolio__r.Name LIMIT 25"};
+        }
+    }
+});
+/**/
+
+/**
+Problem 2: the model for sending summaries
+**/
+
+
+    // getting picklist values into a model... not sure?
+    // try some manual caching instead...?
+
+
+    //picklistvalues model, no caching
+/**/
+app.models.PicklistValue = Force.RemoteObject.extend({
+    
+    fieldlist: ["value","validFor","active","a_Object","a_Field","label","defaultValue"], //irrel
+    
+    
+    syncRemoteObjectWithServer: function(method, id) { //irrel
+        //never doing this, right?
+        if (method != "hats") throw "Method not supported " + method;
+        //return Force.forcetkClient.fileDetails(id, null);
+    }
+
+    //,
+
+    // adding computed fields
+    /**
+    save this for later, we may mod it at some point?
+    toJSON: function() {
+        var that = this;
+        return _.extend(Backbone.Model.prototype.toJSON.call(this), {thumbnailUrl: Force.forcetkClient.impl.instanceUrl + that.get('renditionUrl')});
+    }
+    **/
+});
+
+
+
+
+/*
+
+what seems sensible to me is - fetch from server when the app initialises
+fetching all the values for all the listed objects
+then fetch from cache thereafter
+how do we do that?
+some cachemode flag...
+*/
+
+//ok try having 2 types:
+
+
+
+// The PicklistValueCollection Model
+app.models.PicklistValueCollection = Force.RemoteObjectCollection.extend({
+    model: app.models.PicklistValue,
+    
+    
+    fieldlist: ["value","validFor","active","a_Object","a_Field","label","defaultValue"], //irrel
+    
+    objectName: '',
+    fieldName: '',
+    
+    initialisedRecords: false, //irrel
+    
+    
+    cacheMode: function(method) {
+    
+console.log('getting picklist cacheMode ');
+console.log(initialisedRecords + ';' + this.initialisedRecords);
+console.log('getting picklist cacheMode ');
+    
+        if (this.initialisedRecords || !app.offlineTracker.get("isOnline")) {
+            return Force.CACHE_MODE.CACHE_ONLY;
+        }
+        else {
+            // not sure about this. does it mean that in WRITE mode we write the server and then the local?
+            // sounds wrong to me. guy at DF13 said always go cache first, and I agreed with him
+            // have to get his code off of github
+            return (method == "read" ? Force.CACHE_MODE.CACHE_FIRST : Force.CACHE_MODE.SERVER_FIRST);
+        }
+    },
+
+    setCriteria: function(key, fieldName) {
+        this.objectName = key;
+        this.fieldName = fieldName;
+        this.config = {objectName:key, fieldName:fieldName};
+
+console.log(this.objectName + ':' + this.fieldName);
+        
+    },
+    
+    setCacheCriteria: function(objectName, fieldName) {
+    
+    
+        //means we want to empty out the server collection so lets do that
+        this.reset();
+        
+        this.objectName = objectName;
+        this.fieldName = fieldName;
+        
+        //adds values into the model's attributes, not necessarily the
+        //right way to get them into the templated data
+        //this.set({objectName: objectName, fieldName: fieldName});
+    
+        /**
+        querySpec = navigator.smartstore.buildSmartQuerySpec(
+            
+            , 500
+        );
+        **/
+    
+        this.config = {
+            type:'cache',
+            cacheQuery: {
+                //smart so can order by not the search field
+                queryType:"smart",
+                smartSql:"SELECT {picklists:_soup} FROM {picklists} WHERE {picklists:a_Object} = '" + objectName
+                            + "' AND {picklists:a_Field} = '" + fieldName
+                            + "' ORDER BY {picklists:label}",
+                order:"ascending", pageSize:500
+            }
+        };
+    },
+    
+    
+    //cacheQuery: function() {  },
+    
+    
+    cache: function() { return app.cachePicklists},
+    
+    
+    //also implement fetchRemoteObjectsFromCache...
+    //fetchRemoteObjectsFromCache: function
+    //actually DONT implement fetchRemoteObjectsFromCache as populating config.cacheQuery with sth great should do it
+
+    fetchRemoteObjectsFromServer: function(config) {
+    
+console.log('running fetch on pick val coll ' + config + ';' + config.objectName);
+    
+        var fetchPromise = Force.forcetkClient.describe(config.objectName);
+        
+        /**
+        switch(config.type) {
+            case "ownedFilesList": fetchPromise = Force.forcetkClient.ownedFilesList("me", 0); break;
+            case "filesInUsersGroups": fetchPromise = Force.forcetkClient.filesInUsersGroups("me", 0); break;
+            case "filesSharedWithUser": fetchPromise = Force.forcetkClient.filesSharedWithUser("me", 0); break;
+        };
+        **/
+        
+        
+        
+        
+        return fetchPromise
+            .then(function(resp) {
+            
+            console.log('ran fetchPromise with resp: ' + resp);
+            //console.log('ran fetchPromise with config: ' + config);
+            //console.log('ran fetchPromise with resp: ' + resp.toJSON());
+            /**
+            var prop;
+            for (prop in resp)
+            {
+                console.log( ' DJB -> ' + prop + ' : ' + resp[prop]);
+                try{
+                var propp;
+                for (propp in resp[prop]) console.log( ' DJB -> ' + prop + '.' + propp + ' : ' + resp[prop][propp]);
+                } catch(e){}
+            }
+            **/
+            
+            records = [];
+            
+            //now carve the things into bits and give back a lot of records
+            try
+            {
+        //get the picklist values...
+        //var f;
+        
+                //this.setCriteria (resp.name); //object name eg Meeting__c
+        
+        
+                for (var i = 0; i < resp.fields.length; i++)
+                {
+        
+    
+                    //if (resp[i].name == 'Meeting_Type__c'.fields[i].name == 'Meeting_Type__c')
+                    if (resp.fields[i].type == 'picklist'
+                        //&& resp.fields[i].name == config.fieldName
+                        )
+                    {
+                        for (var j = 0; j < resp.fields[i].picklistValues.length; j++)
+                        {
+                            /**
+                            console.log('ONE TYPE --> ' + resp.fields[i].picklistValues[j].value);
+                  
+                            console.log(_.extend({Id: resp.name + '+' + resp.fields[i].name + '+' + resp.fields[i].picklistValues[j].value,
+                                          Object: resp.name,
+                                          Field: resp.fields[i].name}, resp.fields[i].picklistValues[j]));
+                            **/
+                            
+                            records.push(_.extend({Id: resp.name + '+' + resp.fields[i].name + '+' + resp.fields[i].picklistValues[j].value,
+                                          a_Object: resp.name,
+                                          a_Field: resp.fields[i].name}, resp.fields[i].picklistValues[j]));
+                  
+                        }
+                    }
+
+                }
+                
+                initialisedRecords = true; //irrel
+        
+            }
+            catch (e)
+            {
+                console.log('error processing describeResult for ' + config.type + ' ' + e.message);
+            }
+            /**/
+            
+            
+console.log(records);
+            
+                var nextPageUrl = resp.nextPageUrl;
+                return {
+                    totalSize: records.length,
+                    records: records,
+                    hasMore: false,
+                    getMore: function() {
+                        return false;
+                    },
+                    closeCursor: function() {
+                        return true;
+                    }
+                };
+                
+                /**/
+             
+            });
+    }
+});
+/**/
+
+
+
+app.models.FieldPicklistValueCollection = app.models.PicklistValueCollection.extend({
+
+    cacheMode: Force.CACHE_MODE.CACHE_ONLY,
+    
+    alphaDescriptor: "FieldPicklistValueCollection"
+    
+});
+
+
+
+    app.models.Meeting__c = Force.SObject.extend({
+        sobjectType: "Meeting__c",
+        
+        //fieldlist is a method so different fields can be read than written
+        fieldlist: function(method) {
+console.log('getting meeting__c field list for: ' + method);
+            return method == "read"
+                          ? ["Id", "Name", "Start_Date_Time__c", "End_Date_Time__c", "Primary_Contact__r.Name"
+                            ,"Primary_Contact__r.Phone" ,"Primary_Contact__r.Email"
+                             ,"Meeting_Type__c", "Meeting_Notes__c", "Meeting_Breakthrough__c"
+                             ,"Primary_Contact__r.Account.Name"
+                             ,"Primary_Contact__r.MailingStreet", "Primary_Contact__r.MailingCity"
+                             ,"Primary_Contact__r.MailingPostalCode", "Primary_Contact__r.MailingCountry"
+                             ]
+                          : ["Id", "Name", "Meeting_Notes__c", "Meeting_Breakthrough__c", "Meeting_Type__c"];
+        },
+        
+        cache: function() { return app.cacheMeetings;}, //this is one cache for the app we may need many at some point?
+        
+        cacheForOriginals: function() { return app.cacheForOriginalMeetings;}, //another cache for the whole app, created in the initialisation code
+    
+        cacheMode: function(method) {
+            if (!app.offlineTracker.get("isOnline")) {
+                return Force.CACHE_MODE.CACHE_ONLY;
+            }
+            else {
+            // not sure about this. does it mean that in WRITE mode we write the server and then the local?
+            // sounds wrong to me. guy at DF13 said always go cache first, and I agreed with him
+            // have to get his code off of github
+                return (method == "read" ? Force.CACHE_MODE.CACHE_FIRST : Force.CACHE_MODE.SERVER_FIRST);
+            }
+        },
+        
+        //mergeMode???
+        mergeMode: Force.MERGE_MODE.MERGE_ACCEPT_YOURS //try to merge, local has precedence
+        
+        
+    });
+
+
+    //<!-- Collection of Meetings model. ditto extend ditto etc -->
+    app.models.Meeting__cCollection = Force.SObjectCollection.extend({
+        model: app.models.Meeting__c,
+        //fieldlist is the superset of fields in the Meeting__c model. seems wasteful to code it twice?
+        fieldlist: ["Id", "Name", "Start_Date_Time__c", "End_Date_Time__c", "Primary_Contact__r.Name"
+                            ,"Primary_Contact__r.Phone" ,"Primary_Contact__r.Email"
+                             ,"Meeting_Type__c", "Meeting_Notes__c", "Meeting_Breakthrough__c"
+                             ,"Primary_Contact__r.Account.Name"
+                             ,"Primary_Contact__r.MailingStreet", "Primary_Contact__r.MailingCity"
+                             ,"Primary_Contact__r.MailingPostalCode", "Primary_Contact__r.MailingCountry"
+                             ],
+    
+        
+        //app.cache is a misleadingly named soup for accounts, initialised by the developer
+        //app is just a nice namespace for stuff. irritating because it looked like
+        //a magic thing but it isnt.
+        cache: function() { return app.cacheMeetings},
+        
+        alphaDescriptor: "Meeting__cCollection",
+    
+        cacheForOriginals: function() { return app.cacheForOriginalMeetings;},
+    
+        getCriteria: function() {
+            return this.key;
+        },
+    
+        setCriteria: function(key) {
+            this.key = key;
+        },
+    
+    // config is a smartsync function to define what records are in the Collection
+        config: function() {
+            // Offline: do a cache query
+            if (!app.offlineTracker.get("isOnline")) {
+            // example says: Not using like query because it does a case-sensitive sort
+            // I say: you *are* using a like query and you've solved the problem
+            // I also say: some documentation of config return would be nice
+                return {
+                    type:"cache",
+                    cacheQuery:{
+                        queryType:"smart",
+                        
+                        smartSql:"SELECT {meetings:_soup} FROM {meetings} "
+                        
+                            + "WHERE "
+                                
+                             + (this.key != null && this.key != ""
+                                ? "  ({meetings:Name} LIKE '%" + this.key + "%' OR  {meetings:Primary_Contact__r.Name} LIKE '%" + this.key + "%') AND "
+                                : ""
+                               
+                                )
+                            
+                            
+                            + " {meetings:Start_Date_Time__c} >= '" +  moment().subtract('days',7).startOf('day').format()
+
+                            + "' AND {meetings:Start_Date_Time__c} <= '" + moment().add('days',7).endOf('day').format() + "' "
+                            
+                            + " ORDER BY {meetings:Start_Date_Time__c}",
+                        
+            
+                    
+                        
+                        pageSize:250 //infinite...
+                    }
+                };
+            }
+    
+            // Online
+            else {
+            
+                console.log('fieldlist: ' + this.fieldlist.join(","));
+                console.log('user id: ' + Force.creds.userId);
+            
+            
+                return {
+                    type:"soql",
+                    query:"SELECT " + this.fieldlist.join(",")
+                            + " FROM Meeting__c WHERE "
+                            
+                            //could do with a js SQL/SOQL query engine
+                            //and a date mangling thing
+                            
+                            + " OwnerId = '" + Force.creds.userId + "' "
+                            + " AND Primary_Contact__c != null "
+                            + " AND (Start_Date_Time__c = LAST_N_DAYS:7 OR Start_Date_Time__c = NEXT_N_DAYS:7) "
+                            
+                            + (this.key != null && this.key != ""
+                                ? " AND (Name like '%" + this.key + "%' OR  Primary_Contact__r.Name LIKE '%" + this.key + "%') "
+                                : ""
+                               
+                                )
+                            + " ORDER BY Start_Date_Time__c ASC "
+                };
+            
+            
+            
+            
+            
+            }
+        },
+        
+        //mergeMode???
+        mergeMode: Force.MERGE_MODE.MERGE_ACCEPT_YOURS //try to merge, local has precedence
+    });
+
+
+    // Online/Offline Tracker
+    app.models.OfflineTracker = Backbone.Model.extend({
+        initialize: function() {
+        
+        //should initialize this first?
+        
+            //alert(navigator.onLine);
+        
+            var that = this;
+            this.set("isOnline", navigator.onLine);
+            //this.set("isOnline", false);
+   
+            document.addEventListener(
+                "offline",
+                function() {
+                    console.log("Received OFFLINE event doc");
+                    that.set("isOnline", false);
+                },
+                false
+            );
+   
+            /***
+            bad
+            window.addEventListener(
+                "offline",
+                function() {
+                    console.log("Received OFFLINE event win");
+                    that.set("isOnline", false);
+                },
+                false
+            );
+            ***/
+                
+            document.addEventListener("online", function() {
+                console.log("Received ONLINE event");
+                // User decides when to go back online if you comment out the line below
+                that.set("isOnline", true);
+                
+                //AND automatically go to SYNC whenever we come online?
+                //could get really annoying.
+                // how about actually sync whenever we come online? silently? hmmm....
+                
+                
+                }, false);
+        }
+    });
+    
+    
+    
+// -------------------------------------------------- The Views ---------------------------------------------------- //
+/***
+**/
+
+//shouldnt this have all multi-select, blah blah properties?
+app.views.PickList = Backbone.View.extend({
+    template: _.template($("#picklist").html()),
+    
+
+    //initialize: function() {
+    //    this.model.on("change", this.render, this);
+    //},
+    
+    
+    
+    render: function(selectedValue) {
+    
+        var s = this.model.toJSON();
+        
+        
+
+//wtf is wrong with this?
+console.log('rendering a picklist');
+console.log(s);
+        
+        var templateData = {records: s};
+
+console.log('rendering a picklist 2');
+console.log(templateData);
+
+
+
+console.log(this.model.objectName + ':' + this.model.fieldName);
+console.log(this.model.objectName + ':' + this.model.fieldName);
+console.log(this.model.toJSON());
+console.log(this.model.alphaDescriptor);
+        
+    
+        $(this.el).html(this.template(
+            _.extend({fieldName: this.model.fieldName,
+                      objectName: this.model.objectName,
+                      selectedValue: selectedValue},
+                        templateData)
+                      //this.model.toJSON())
+        ));
+        return this;
+    }
+});
+
+app.views.SearchPage = Backbone.View.extend({
+
+    template: _.template($("#search-page").html()),
+
+    events: {
+        "keyup .search-key": "search",
+        "click .button-prev": "goBack",
+        "click .button-next": "goAdd",
+        "click .save": "save",
+        "click .get-summaries": "getSummaries",
+        //"click .refresh": "goRefresh"
+        "click .refresh": "goSyncOrRefresh"
+    },
+
+    initialize: function() {
+        this.offlineTogglerView = new app.views.OfflineToggler({model: app.offlineTracker});
+        
+console.log('init SearchPage done; model is: ' + this.model);
+
+    },
+    
+    TitleValue: "Search",
+    TitleShortValue: "",
+    ShowBack: false,
+    ShowDone: false,
+    ShowAdd: false,
+    ShowSave: false,
+    ShowNotFound: false,
+    ShowRefresh: false,
+    ShowGetSummaries: false,
+    backAction: function() {
+console.log('standard backaction');
+        return app.router.getLastPage();
+    },
+    addAction: function() {
+console.log('standard addaction');
+        return app.router.getLastPage();
+    },
+    
+    listView: null,
+
+    render: function(eventName) {
+    
+
+console.log(' - > - > rendering SearchPage');
+
+
+
+        showNotFoundThisTime = this.ShowNotFound && this.listView.model.models.length == 0;
+
+console.log('is online?e?e ' + app.offlineTracker.get("isOnline"));
+
+    
+        $(this.el).html(this.template({TitleValue:this.TitleValue
+                                        ,TitleShortValue:this.TitleShortValue
+                                        , ShowBack:this.ShowBack
+                                        , ShowDone:this.ShowDone
+                                        , ShowSave:this.ShowSave
+                                        , ShowAdd:this.ShowAdd
+                                        , ShowRefresh:this.ShowRefresh
+                                        , IsOnline:app.offlineTracker.get("isOnline")
+                                        , ShowNotFound:showNotFoundThisTime
+                                        , ShowGetSummaries:this.ShowGetSummaries
+                                        }));
+                                        
+        $(".search-key", this.el).val(this.model.getCriteria());
+        
+        
+        this.offlineTogglerView.setElement($("#offlineStatus", this.el)).render();
+        this.listView.setElement($("ul", this.el)).render();
+        
+console.log('this.ShowNotFound' + this.ShowNotFound);
+console.log('this.listView.model.models.length' + this.listView.model.models.length) ;
+
+        /**
+        //does nothing. where do we put this so it is called when the render is complete?
+        try {
+            console.log("is it today ? ");
+            (jQuery(".IsToday")[0]).scrollIntoView();
+            console.log("is it today ? " + jQuery(".IsToday")[0] );
+        }
+        catch (e) {}
+        **/
+
+
+        return this;
+    },
+ 
+    goRefresh: function(event) {
+    
+        this.model.fetch();
+    },
+    
+    goSyncOrRefresh: function(event) {
+console.log('goSyncOrRefresh');
+        var that = this;
+        //before overwriting what we already did, see if we have old stuff we need to sync
+        app.router.syncOrContinue(function(){that.model.fetch()});
+        
+    },
+
+    search: function(event) {
+        this.model.setCriteria($(".search-key", this.el).val());
+        this.model.fetch();
+    },
+    
+    getSummaries: function(event) {
+        event.preventDefault();
+    
+        if (!app.offlineTracker.get("isOnline")) {
+            navigator.notification.alert("Cannot request summaries when offline",null,app.appTitle,"OK");
+        }
+        else {
+            
+            
+            aCheckedIds = [];
+            
+            this.model.each(function(model){
+                if (model.get("Checked")) aCheckedIds.push(model.get("Id"));
+            });
+            
+            
+            if (aCheckedIds.length > 0) {
+            
+            
+            
+                Force.forcetkClient.apexrest('/Async/MeetingPDFRequest/' + aCheckedIds.join(','),
+                                             'GET');
+                         
+                                     
+                jQuery("#alpha_message").html('<br/><h1>Requesting Summaries</h1>');
+            }
+            
+            else {
+                navigator.notification.alert("Please select meetings by clicking the envelope icon next to the meeting. When the meeting is selected, the icon turns green.",null,app.appTitle,"OK");
+                //alert(jQuery.mobile);
+                //jQuery('<div id="alpha_popup"><div id="alpha_popup_message">here is yer message</div></div>').popup("open");
+                
+                
+            }
+        }
+        
+        
+    },
+    
+    goBack: function(event) {
+//console.log(this.backAction());
+        app.router.navigate(this.backAction(), {trigger:true});
+    },
+    
+    goAdd: function(event) {
+//console.log(this.backAction());
+        if (this.addAction() != "") app.router.navigate(this.addAction(), {trigger:true});
+    },
+    
+    save: function(event) {
+        //pass it down to the list view...
+        if (this.listView != null && this.listView.save != null) this.listView.save(event);
+    }
+    
+});
+
+
+app.views.AnythingListView = Backbone.View.extend({
+
+    listItemViews: [],
+    
+    notFoundView: null,
+    
+    //meetingSeparatorViews: [],
+
+    initialize: function() {
+console.log('init AnythingListView y no model?');
+        if (this.model && this.model.on) this.model.on("reset", this.render, this);
+    },
+    
+    listItemView: null,
+    
+    //setModel: function(pModel) {
+    //    this.model = pModel;
+    //    this.model.on("reset", this.render, this);
+    //},
+    
+
+    backAction: function() {return "#";},
+    render: function(eventName) {
+    
+    
+        that = this;
+        _.each(this.listItemViews, function(itemView) { itemView.close(); });
+        //_.each(this.meetingSeparatorViews, function(itemView) { itemView.close(); });
+        
+        if (this.notFoundView)
+        {
+            this.notFoundView.remove();
+            this.notFoundView.off();
+        }
+        
+        
+        //this.listItemViews = _.map(this.model.models, function(model) { return new app.views.MeetingListItemView({model: model}); });
+        
+console.log('how many mitems? ' + this.model.models.length);
+//console.log(this.model.models[0]);
+        /** this is not doing it **/
+        //maybe there are none?
+        if (this.model.models.length == 0 && this.model.alphaDescriptor == "Meeting__cCollection")
+        {
+            console.log('anything list view w no models');
+            this.notFoundView = new app.views.MeetingNotFoundView();
+            $(this.el).append(this.notFoundView.render().el);
+        }
+        /**/
+        
+        
+        this.listItemViews = _.map(this.model.models, function(model) {
+            return new that.listItemView({model: model});
+        });
+        
+        
+        //now add more - add the day separators for meeting list
+        if (this.model.models.length != 0 && this.model.alphaDescriptor == "Meeting__cCollection")
+        {
+            tempListItemViews = [];
+            currDate = null;
+            
+            
+            for (index = 0; index < this.listItemViews.length; ++index) {
+                view = this.listItemViews[index];
+                //format the date as a date so we dont get a new one for every TIME
+                thisDate = moment(view.model.get("Start_Date_Time__c")).format("dddd, MMMM Do YYYY");
+//console.log('date...' + view.model.get("Start_Date_Time__c"));
+//console.log('nicedate...' + moment(view.model.get("Start_Date_Time__c")).format("dddd, MMMM Do YYYY"));
+                
+                if (currDate != thisDate)
+                {
+                
+                    sepView = new app.views.MeetingListSeparatorView();
+                    sepView.MeetingDate = thisDate;
+                
+                    //and make Today scroll in by setting its header row to IsToday
+                    //same day without any clever...
+                    if (moment().isSame(moment(view.model.get("Start_Date_Time__c")), "day")
+                        || moment().isBefore(moment(view.model.get("Start_Date_Time__c")), "day")
+                    
+                    )
+                    {
+                        sepView.IsToday = true;
+                    }
+                
+                    tempListItemViews.push(sepView);
+                    currDate = thisDate;
+                }
+            
+             
+                tempListItemViews.push(view);
+                
+            }
+
+            
+            this.listItemViews = tempListItemViews;
+            
+            
+            _.defer(function(){
+            
+                try {
+                    jQuery(".IsToday")[0].scrollIntoView(true);
+                } catch (err) {
+                }
+            
+            });
+            
+        }
+        
+        
+// think this is where meeting-list-item s are added to the meeting list...
+        $(this.el).append(_.map(this.listItemViews, function(itemView) {
+//console.log('adding sumn ' + itemView);
+            return itemView.render().el;
+        } ));
+        
+        
+
+        
+        
+        return this;
+    },
+    
+    
+    
+//should these be somewhere nicer? reqd by all saves, no?
+    
+    showFieldError: function(field, message, error) {
+console.log('showfielderror:' + field + ';' + message + ';' + error);
+        var errorEl = $("#meeting" + field + "Error", this.el);
+        errorEl.addClass(error ? "count-negative" : "count-other");
+        errorEl.html(message);
+        errorEl.show();
+    },
+
+    handleError: function(error) {
+        var that = this;
+console.log('handleError ' + error.type);
+        if (error.type === "RestError") {
+            _.each(error.details, function(detail) {
+                if (detail.fields == null || detail.fields.length == 0) { alert(detail.message); }
+                else {_.each(detail.fields, function(field) {that.showFieldError(field, detail.message);});}
+            });
+        }
+        else if (error.type == "ConflictError") {
+            _.each(error.remoteChanges, function(field) {
+                var conflict = error.conflictingChanges.indexOf(field) >=0;
+                that.showFieldError(field, "Server: " +  error.theirs[field], conflict);
+            });
+            $(".merge", this.el).show();
+            $(".overwrite", this.el).show();
+        }
+    },
+
+    getSaveOptions: function(mergeMode, cacheMode) {
+        var that = this;
+console.log('getting save options');
+        
+        return {
+            cacheMode: cacheMode,
+            mergeMode: mergeMode,
+            success: function() { console.log('save success...'); app.router.navigate(that.backAction, {trigger:true}); },
+            error: function(data, err, options) { console.log('save error...'); that.handleError(new Force.Error(err)); }
+        };
+    },
+
+    sync: function(event) {
+console.log('doing sync in AnythingListView');
+console.log('i guess this is called on each object separately why');
+        var that = this;
+        if (this.model.length == 0 || this.model.at(0).get("__sync_failed__")) {
+            // we push sync failures back to the end of the list - if we encounter one, it means we are done
+            return;
+        }
+        else {
+        
+            //this backbone function fails in backbone 1.0.0 when the record has been pushed
+            //manually onto the array and then saved (eg capability-meeting, portfolio-meeting)
+            //but seems to work dandy with backbone 1.1.2
+            var record = this.model.shift();
+
+            var options = {
+                mergeMode: Force.MERGE_MODE.MERGE_FAIL_IF_CHANGED,
+                success: function() {
+console.log('this is the sync success callback huh');
+                    if (that.model.length == 0) {
+                        //app.router.navigate("#", {trigger:true});
+                        app.router.navigate(that.backAction(), {trigger:true});
+                    }
+                    else {
+                        that.sync();
+                    }
+                },
+                error: function() {
+console.log('this is the sync error callback huh');
+                    record = record.set("__sync_failed__", true);
+                    that.model.push(record);
+                    that.sync();
+                }
+            };
+
+            /***
+            // cant update capability-meetings although that doesnt look like the problem
+            if (this.model.alphaDescriptor == "Capability_Meeting__cColletion" && record.get("__locally_updated__") ) {
+               return record.set("__locally_updated__", false);
+            }
+            ***/
+console.log("calling save on " + record.get("id") + record.id);
+            //why are we saving unmodified records? lets sort this out at some point
+            
+            return record.get("__locally_deleted__") ? record.destroy(options) : record.save(null, options)  ;
+        }
+    },
+
+
+    save: function() {
+    
+console.log('doing save in AnythingListView');
+console.log(this.model);
+//console.log(this.model['save']);
+        //this.model.save(null, this.getSaveOptions(Force.MERGE_MODE.MERGE_FAIL_IF_CHANGED));
+        //this.model.sync(null, this.getSaveOptions(Force.MERGE_MODE.MERGE_FAIL_IF_CHANGED));
+        
+        this.sync();
+        
+    },
+
+    saveMerge: function() {
+        this.model.save(null, this.getSaveOptions(Force.MERGE_MODE.MERGE_ACCEPT_YOURS));
+    },
+
+    saveOverwrite: function() {
+        this.model.save(null, this.getSaveOptions(Force.MERGE_MODE.OVERWRITE));
+    },
+
+    toggleDelete: function() {
+        if (this.model.get("__locally_deleted__")) {
+            this.model.set("__locally_deleted__", false);
+            this.model.save(null, this.getSaveOptions(null, Force.CACHE_MODE.CACHE_ONLY));
+        }
+        else {
+console.log('doing delete');
+            this.model.destroy({
+                success: function(data) {
+                    //app.router.navigate("#", {trigger:true});
+                },
+                error: function(data, err, options) {
+                    var error = new Force.Error(err);
+                    alert("Failed to delete account: " + (error.type === "RestError" ? error.details[0].message : "Remote change detected - delete aborted"));
+                }
+            });
+        }
+    }
+});
+
+
+
+app.views.MeetingListView = Backbone.View.extend({
+
+    listItemViews: [],
+
+    initialize: function() {
+console.log(' - > - > initialize MeetingListView');
+        this.model.on("reset", this.render, this);
+    },
+
+    render: function(eventName) {
+    
+console.log(' - > - > rendering MeetingListView');
+console.log(' - > - > ' + this.template);
+console.log(' - > - > MODEL ,' + this.model.toJSON());
+//console.log(' - > - > ' + this.model.models.toJSON());
+//console.log(' - > - > ' + this.listItemViews.toJSON());
+    
+        _.each(this.listItemViews, function(itemView) { itemView.close(); });
+        this.listItemViews = _.map(this.model.models, function(model) { return new app.views.MeetingListItemView({model: model}); });
+        
+        //
+        
+        
+        
+        $(this.el).append(_.map(this.listItemViews, function(itemView) { return itemView.render().el;} ));
+  
+       //this is used in syncpage
+//console.log('this.model.models.length ' + this.model.models.length);
+//        if(this.model.models.length == 0) $(this.el).append( (new app.views.MeetingNotFoundView()).render() );
+        
+        //$(this.el).html($(this.template({TitleValue: "Meetings"})).append(_.map(this.listItemViews, function(itemView) { return itemView.render().el;} )));
+        
+//var prop;
+//for (prop in this) console.log( ' DJB -> ' + prop + ' : ' + this[prop]);
+
+//console.log('jq:' + $(this.el).html());
+        
+        return this;
+    }
+});
+
+
+app.views.MeetingNotFoundView = Backbone.View.extend({
+
+    template: _.template($("#meetings-not-found").html()),
+    render: function(eventName) {
+    
+   
+        $(this.el).html(this.template());
+        
+        
+        return this;
+    }
+});
+
+
+app.views.MeetingListSeparatorView = Backbone.View.extend({
+
+    tagName: "li",
+    className: "separator",
+    template: _.template($("#meeting-list-separator").html()),
+    render: function(eventName) {
+console.log('Meeting date? ' + this.MeetingDate);
+        $(this.el).html(this.template({
+            MeetingDate:this.MeetingDate
+            ,IsToday:this.IsToday
+        }));
+        return this;
+    },
+    MeetingDate: null,
+    IsToday: false,
+    close: function() {
+        this.remove();
+        this.off();
+    }
+});
+
+/** Opportunity Views -------------------------- **/
+/** Opportunity for selection **/
+app.views.OpportunityListItemView = Backbone.View.extend({
+
+    
+    events: {
+        "click .selectcheck": "setChecked"
+    },
+    tagName: "li",
+    template: _.template($("#opportunity-list-item").html()),
+    render: function(eventName) {
+    
+   
+        $(this.el).html(this.template(_.extend({MeetingId: function(){lid = ''; try {lid = app.meeting.get("Id");} catch(e){}; return lid; },
+                                                Checked: false},this.model.toJSON())));
+        
+        
+        return this;
+    },
+
+    close: function() {
+        this.remove();
+        this.off();
+    },
+    
+    setChecked: function(event)
+    {
+        this.model.set("Checked", !this.model.get("Checked"));
+        return this.render();
+    }
+    
+})
+
+
+/** Opportunity Meeting for display  **/
+app.views.OpportunityMeetingListItemView = Backbone.View.extend({
+
+    tagName: "li",
+    template: _.template($("#opportunitymeeting-list-item").html()),
+
+    events: {
+        "click #deleteObj": "deleteObj"
+    },
+    
+    
+    render: function(eventName) {
+        $(this.el).html(this.template(_.extend({MeetingId: app.meeting.get("Id")},this.model.toJSON())));
+        return this;
+    },
+
+    close: function() {
+        this.remove();
+        this.off();
+    },
+    
+    deleteObj: function(eventN) {
+        this.model.set("__locally_deleted__",!this.model.get("__locally_deleted__"));
+        return this.render();
+    }
+    
+});
+
+/** Opportunity list item for sync page **/
+app.views.OpportunityMeetingListItemSyncView = Backbone.View.extend({
+
+    tagName: "li",
+    template: _.template($("#opportunitymeeting-list-item-sync").html()),
+    render: function(eventName) {
+        $(this.el).html(this.template(this.model.toJSON()));
+        return this;
+    },
+    close: function() {
+        this.remove();
+        this.off();
+    },
+});
+
+/** end Opportunity views ** ----------------------------- **/
+
+
+/** Internal Fund Views -------------------------- **/
+/** Internal Fund for selection **/
+app.views.InternalfundListItemView = Backbone.View.extend({
+
+    
+    events: {
+        "click .selectcheck": "setChecked"
+    },
+    tagName: "li",
+    template: _.template($("#internalfund-list-item").html()),
+    render: function(eventName) {
+    
+   
+        $(this.el).html(this.template(_.extend({MeetingId: function(){lid = ''; try {lid = app.meeting.get("Id");} catch(e){}; return lid; },
+                                                Checked: false},this.model.toJSON())));
+        
+        
+        return this;
+    },
+
+    close: function() {
+        this.remove();
+        this.off();
+    },
+    
+    setChecked: function(event)
+    {
+        this.model.set("Checked", !this.model.get("Checked"));
+        return this.render();
+    }
+    
+})
+
+
+/** Internal Fund Meeting for display  **/
+app.views.InternalfundMeetingListItemView = Backbone.View.extend({
+
+    tagName: "li",
+    template: _.template($("#internalfundmeeting-list-item").html()),
+
+    events: {
+        "click #deleteObj": "deleteObj"
+    },
+    
+    
+    render: function(eventName) {
+    
+        $(this.el).html(this.template(_.extend({MeetingId: app.meeting.get("Id")},this.model.toJSON())));
+        
+        return this;
+    },
+
+    close: function() {
+        this.remove();
+        this.off();
+    },
+    
+
+    
+    deleteObj: function(eventN) {
+        this.model.set("__locally_deleted__",!this.model.get("__locally_deleted__"));
+        
+        return this.render();
+        
+    }
+    
+    
+});
+
+app.views.InternalfundMeetingListItemSyncView = Backbone.View.extend({
+
+    tagName: "li",
+    template: _.template($("#internalfundmeeting-list-item-sync").html()),
+    render: function(eventName) {
+        $(this.el).html(this.template(this.model.toJSON()));
+        return this;
+    },
+    close: function() {
+        this.remove();
+        this.off();
+    },
+});
+
+/** end Internal Fund views ** ----------------------------- **/
+
+app.views.ClientPortfolioListItemView = Backbone.View.extend({
+
+    
+    events: {
+        "click .selectcheck": "setChecked"
+    },
+    tagName: "li",
+    template: _.template($("#clientportfolio-list-item").html()),
+    render: function(eventName) {
+    
+   
+        $(this.el).html(this.template(_.extend({MeetingId: function(){lid = ''; try {lid = app.meeting.get("Id");} catch(e){}; return lid; },
+                                                Checked: false},this.model.toJSON())));
+        
+        
+        return this;
+    },
+
+    close: function() {
+        this.remove();
+        this.off();
+    },
+    
+    setChecked: function(event)
+    {
+console.log("setChecked ran. is this the checkbox? what's the model here?") ;
+console.log("was a: " + event.target.id);
+        //if (event.target.checked) this.model.set("Checked",true);
+        //else this.model.set("Checked",false);
+        this.model.set("Checked", !this.model.get("Checked"));
+
+console.log(this.model.get("Name") + ':' + this.model.get("Checked"));
+        return this.render();
+    }
+    
+})
+
+app.views.PortfolioListItemSyncView = Backbone.View.extend({
+
+    tagName: "li",
+    template: _.template($("#portfoliomeeting-list-item-sync").html()),
+    render: function(eventName) {
+console.log(' PLI sync ' + this.model.toJSON());
+        //$(this.el).html(this.template(_.extend({MeetingId: app.meeting.get("Id")},this.model.toJSON())));
+//PLI Sync has no meeting id
+        $(this.el).html(this.template(this.model.toJSON()));
+        
+        return this;
+    },
+    close: function() {
+        this.remove();
+        this.off();
+    },
+});
+
+
+app.views.PortfolioListItemView = Backbone.View.extend({
+
+    tagName: "li",
+    template: _.template($("#portfoliomeeting-list-item").html()),
+
+    events: {
+        "click #deleteObj": "deleteObj"
+    },
+    
+    
+    
+    //intialize: function(){
+    //    this.model.on("change", this.render, this);
+    //},
+    
+    
+    render: function(eventName) {
+    
+        //this.Nice_Start_Date_Time__c = moment(this.model.attributes.Start_Date_Time__c).calendar();
+        //var templateData = _.extend({__sync_failed__:false, "Nice_Start_Date_Time__c":this.Nice_Start_Date_Time__c}, this.model.toJSON());
+        
+//console.log(' - > - > rendereing MeetingListItemView ' + templateData);
+        
+console.log(' CPL 01 ' + this.model.toJSON());
+        $(this.el).html(this.template(_.extend({MeetingId: app.meeting.get("Id")},this.model.toJSON())));
+        
+
+//console.log(' - > - > rendered MeetingListItemView ' + templateData);
+        
+        return this;
+    },
+
+    close: function() {
+        this.remove();
+        this.off();
+    },
+    
+    
+    deleteObj: function(eventN) {
+        this.model.set("__locally_deleted__",!this.model.get("__locally_deleted__"));
+        
+        return this.render();
+        
+    }
+    
+    
+});
+
+
+app.views.MeetingListItemView = Backbone.View.extend({
+
+    tagName: "li",
+    template: _.template($("#meeting-list-item").html()),
+ 
+    events: {
+        "click .selectcheck": "setChecked"
+    },
+    
+    setChecked: function(event)
+    {
+        this.model.set("Checked",!this.model.get("Checked"));
+        return this.render();
+    },
+    
+    
+    render: function(eventName) {
+    
+        console.log("1953 Start_Date_Time__c: " + this.model.attributes.Start_Date_Time__c);
+    
+    /***
+        dt = new Date(this.model.attributes.Start_Date_Time__c);
+        console.log(dt);
+        dtm = new moment(this.model.attributes.Start_Date_Time__c);
+        console.log(dtm);
+
+   
+        dtFrom = moment().subtract('days',7).startOf('day');
+        dtTo = moment().add('days',7).endOf('day');
+        console.log("1964");
+        console.error(dtFrom);
+        console.log(dtTo);
+    ****/
+    
+    
+        
+    
+        this.Nice_Start_Date_Time__c = moment(this.model.attributes.Start_Date_Time__c).calendar();
+        var templateData = _.extend({__sync_failed__:false,
+                                     "Nice_Start_Date_Time__c":this.Nice_Start_Date_Time__c,
+                                     Checked: false}, this.model.toJSON());
+        
+console.log(' - > - > rendereing MeetingListItemView ' + templateData);
+        
+        
+        $(this.el).html(this.template(templateData));
+        
+
+console.log(' - > - > rendered MeetingListItemView ' + templateData);
+        
+        return this;
+    },
+
+    close: function() {
+        this.remove();
+        this.off();
+    }
+});
+
+app.views.OfflineToggler = Backbone.View.extend({
+
+    template: _.template($("#offline-toggler").html()),
+
+    events: {
+        "click": "toggle"
+    },
+
+    initialize: function() {
+        
+        var that = this;
+        
+        this.model.on("change:isOnline",
+                      this.render,
+                      this);
+                      
+        $(window).bind("orientationchange", function (ev) {
+            that.render();
+        });
+                      
+                      
+    },
+
+    render: function(eventName) {
+        $(this.el).html(this.template(this.model.toJSON()));
+        return this;
+    },
+
+    toggle: function(event) {
+        event.preventDefault();
+        
+        //don't allow the user to take us back online when we have no connection
+        if (this.model.get("isOnline") || navigator.onLine) {
+            this.model.set("isOnline", !this.model.get("isOnline"))
+            if (this.model.get("isOnline")) {
+                app.router.navigate("#sync", {trigger:true});
+            }
+        
+        
+        }
+        
+    }
+});
+
+
+app.views.SyncPage = Backbone.View.extend({
+
+
+    //need multiple models - we're syncing a number of things...
+    moremodels: [],
+    //and each model needs a listview?...
+    morelistViews: [],
+    
+    template: _.template($("#sync-page").html()),
+
+    events: {
+        "click .button-prev": "goBack",
+        "click .sync": "sync"
+    },
+
+    initialize: function() {
+        var that = this;
+        //not sure what's going on here. does it mean re-render on any of these events? I think so
+        _.each(["reset","add","remove"], function(eventName) { that.model.on(eventName, that.render, that); });
+        this.listView = new app.views.MeetingListView({model: this.model});
+console.log("initialised syncview with model " + this.model.sobjectType);
+/***
+        _.each(this.moremodels, function(amodel) {
+console.log("amodel - list view " + amodel);
+            that.morelistViews.push(new app.views.AnythingListView({model: amodel}));
+
+        });
+***/
+        
+        //XXX COME BACK
+    },
+    
+    addModel: function(aModel, aListItemView) {
+        this.moremodels.push(aModel);
+        aModelListView = new app.views.AnythingListView({model: aModel});
+        aModelListView.listItemView = aListItemView;
+        
+        this.morelistViews.push(aModelListView);
+    },
+
+    render: function(eventName) {
+    
+        //clear before render...
+        this.allRecordsInAllModels = [];
+    
+        //countlocallymodified to include ALL the models we're syncing
+        //mebs fetch them in here? --awful--
+        var count = 0;
+        _.each(this.moremodels, function(amodel) {
+console.log("counting moremodels length: " + amodel + ";" + amodel.models.length + ";" + amodel.alphaDescriptor);
+//what all are the contents of these? why is there something in it but its length is zero?
+//for (var kk in amodel.models){
+//console.log("kk" + kk + ':' + amodel.models[kk]);
+//}
+
+            count += amodel.models.length;
+        });
+    
+        count += this.model.length;
+    
+        //$(this.el).html(this.template(_.extend({countLocallyModified: this.model.length}, this.model.toJSON())));
+        $(this.el).html(this.template(_.extend({countLocallyModified: count}, this.model.toJSON())));
+        
+        this.listView.setElement($("ul", this.el)).render();
+        
+        //cycle through, adding more listviews?
+        
+        for (var i = 0; i < this.morelistViews.length; i++ )
+        {
+console.log("are we adding a list view? even though we're blanks? " + this.moremodels[i].  length );
+            this.morelistViews[i].setElement($("ul", this.el)).render();
+        }
+        
+        return this;
+    },
+
+    goBack: function(event) {
+        if (this.model.length > 0) {
+            // We are not done - going back offline before leaving screen
+            app.offlineTracker.set("isOnline", false);
+        }
+        app.router.navigate("#", {trigger:true});
+    },
+
+    getSyncRecords: function (event) {
+    
+        if (this.syncRecords == null)
+        {
+        }
+    
+        return this.syncRecords;
+    
+    },
+    
+    sync: function(event) {
+    
+        //try grabbing some other models into this model
+        //if (this.model.length == 0)
+console.log ("event is: " + typeof event);
+    
+console.log("sync was called. model length: " + this.model.length);
+console.log("sync was called. moremodels0 length: " + this.moremodels[0].length);
+console.log("sync was called. allrecordsinallmodels length: " + this.allRecordsInAllModels.length);
+        //this is calling itself and operating on the first record in the queue every time it does so
+        //need it to operate on a queue of queues so that the failures can go back in the queue?
+        // OR just build a big queue on render...
+        
+        
+        /** initial call has an event. recursion calls dont **/
+        if (typeof event === "object")
+        {
+            this.allRecords = [];
+            
+        }
+        
+        
+        var that = this;
+        
+        
+        //the question is: does the .model. have anything?
+        //do any of the moremodels have anything?
+        //is it a not a bad thing?
+        //shouldnt be that challfenging
+        
+        var hasMore = false;
+        var hasFail = false;
+        if (this.model.length > 0)
+        {
+console.log("this has more");
+            hasMore = true;
+            if (this.model.at(0).get("__sync_failed__")) hasFail = true;
+        }
+        
+        if (!hasMore)
+        {
+            for (var i = 0; i< this.moremodels.length; i++)
+            {
+//console.log("this.moremodels " + i );
+                if (this.moremodels[i].length > 0) {
+//console.log("this.moremodels " + i + " has more ");
+                    hasMore = true;
+                    if (this.moremodels[i].at(0).get("__sync_failed__")) hasFail = true;
+                }
+            }
+        }
+        
+        //this is the hack
+        if (!hasMore || hasFail) {
+            // we push sync failures back to the end of the list - if we encounter one, it means we are done
+//console.log("finished or hit a sync failure which was what");
+            return;
+        }
+        else {
+        
+            var record;
+        
+        
+            if (this.model.length > 0) record = this.model.shift();
+            else {
+                for (var i = 0; i< this.moremodels.length; i++)
+                {
+//console.log("getting from this.moremodels " + i );
+                    if (this.moremodels[i].length > 0) {
+//console.log("getting from this.moremodels " + i + " has more ");
+                        record = this.moremodels[i].shift();
+                        break;
+                    }
+                }
+            }
+            
+            var fieldListTailoredForCreateUpdate = record.fieldlist(record.id.slice(0,"local_".length) == "local_"
+                                                                    ? "create"
+                                                                    : "update");
+
+//console.log(fieldListTailoredForCreateUpdate);
+
+            var options = {
+            
+                fieldlist:fieldListTailoredForCreateUpdate,
+            
+                mergeMode: Force.MERGE_MODE.MERGE_FAIL_IF_CHANGED,
+                success: function() {
+                    var anyMore = true;
+                    
+                    if (that.model.length == 0) {
+                    
+                        anyMore = false;
+                        for (var i = 0; i< that.moremodels.length; i++)
+                        {
+                            if (that.moremodels[i].length > 0) {
+                                anyMore = true;
+                                break;
+                            }
+                        }
+                        // DJB only leave when we done em all
+                        if (!anyMore) app.router.navigate("#", {trigger:true});
+                    }
+                    
+                    if (anyMore) {
+                        that.sync();
+                    }
+                },
+                error: function() {
+                    record = record.set("__sync_failed__", true);
+                    
+                    //this is putting them back in the collection
+                    //we need to find the right collection to put them in by SobjectType?
+                    
+                    //that.model.push(record); //YZY
+                    
+                    /**
+                    app.models.Portfolio__cCollection = Force.SObjectCollection.extend({
+                    model: app.models.Portfolio__c,
+                    **/
+                    
+                    if (record.sobjectType == that.model.model.sobjectType) that.model.push(record);
+                    else {
+                        for (var i = 0; i< that.moremodels.length; i++)
+                        {
+                            if (record.sobjectType == that.moremodels[i].model.sobjectType ) {
+                                that.moremodels[i].push(record);
+                                break;
+                            }
+                        }
+                    }
+
+                    
+                    
+                    that.sync();
+                }
+            };
+
+            return record.get("__locally_deleted__") ? record.destroy(options) : record.save(null, options);
+        }
+        
+        
+        
+        /****
+        THIS IS THE ORIG
+        if (this.model.length == 0 || this.model.at(0).get("__sync_failed__")) {
+            // we push sync failures back to the end of the list - if we encounter one, it means we are done
+console.log("hit a sync failure which was what");
+            return;
+        }
+        else {
+            var record = this.model.shift();
+
+            var options = {
+                mergeMode: Force.MERGE_MODE.MERGE_FAIL_IF_CHANGED,
+                success: function() {
+                    if (that.model.length == 0) {
+                        app.router.navigate("#", {trigger:true});
+                    }
+                    else {
+                        that.sync();
+                    }
+                },
+                error: function() {
+                    record = record.set("__sync_failed__", true);
+                    that.model.push(record);
+                    that.sync();
+                }
+            };
+
+            return record.get("__locally_deleted__") ? record.destroy(options) : record.save(null, options);
+        }
+        ****/
+    }
+});
+
+
+
+
+
+
+app.views.EditMeetingPage = Backbone.View.extend({
+
+    action: null,
+    backAction: null,
+    meetingTypePicklist:null,
+
+    template: _.template($("#edit-meeting-page").html()),
+    
+    /**
+    backAction: function() {
+console.log('standard backaction');
+        return app.router.getLastPage();
+    },
+    **/
+    
+    backAction: "list", //when going back, always go back to the list
+
+    events: {
+        "click .button-prev": "goBack",
+        "change": "change",
+        "click .save": "save",
+        "click .merge": "saveMerge",
+        "click .overwrite": "saveOverwrite",
+        "click .toggleDelete": "toggleDelete"
+    },
+
+    initialize: function() {
+    
+        var that = this;
+    
+        $(window).bind("orientationchange", function (ev) {
+            that.render();
+        });
+    
+        this.offlineTogglerView = new app.views.OfflineToggler({model: app.offlineTracker});
+        app.offlineTracker.on("change:isOnline", this.render, this);
+        
+        
+    },
+
+
+    //adding a function into the data, so it can be called?
+
+
+    render: function(eventName) {
+    
+        // Lisa says: 2014-05-14
+        // 4)      The search button does not clear between screens. I think it should
+        // but I think it should clear when you go back to the meeting
+        /**/
+        app.clientPortfoliosPage.model.setCriteria("");
+        app.capabilitiesPage.model.setCriteria("");
+        app.internalfundsPage.model.setCriteria("");
+        app.opportunitiesPage.model.setCriteria("");
+        
+        app.portfolioMeetings.setCriteria("");
+        app.capabilityMeetings.setCriteria("");
+        app.internalfundMeetings.setCriteria("");
+        app.opportunityMeetings.setCriteria("");
+        /**/
+    
+        that = this;
+    
+        this.action = (null == this.model.id) ? "Add" : "Edit";
+        if (this.action == "Add") { this.model.set({__local__: false, Name:"", Industry:"", Phone:"", LastModifiedDate:"", attributes : { type: "Account"}}); }
+        
+        //this.Nice_Start_Date_Time__c = moment(this.model.attributes.Start_Date_Time__c).calendar();
+        
+        this.Nice_Start_Date_Time__c = moment(this.model.attributes.Start_Date_Time__c).format('dddd MMMM Do [at] h:mm a');
+        
+        this.meetingTypesPicklistView = new app.views.PickList({model: app.meetingTypePicklist });
+         
+        $(this.el).html(this.template(_.extend({action: this.action,
+                                                "Nice_Start_Date_Time__c":this.Nice_Start_Date_Time__c}, this.model.toJSON())));
+        
+        
+        this.meetingTypesPicklistView.setElement($("#meetingtype-picklist", this.el)).render(this.model.get("Meeting_Type__c"));
+        this.offlineTogglerView.setElement($("#offlineStatus", this.el)).render();
+        
+        var online = app.offlineTracker.get("isOnline");
+        $(".merge", this.el).hide();
+        $(".overwrite", this.el).hide();
+
+        if (this.action == "Add") {
+            $(".toggleDelete", this.el).hide();
+        }
+        else {
+            var deleted = this.model.get("__locally_deleted__");
+            $(".toggleDelete", this.el).html(deleted?"Undelete":"Delete");
+        }
+        return this;
+    },
+
+    change: function(evt) {
+        // apply change to model
+        var target = event.target;
+        this.model.set(target.name, target.value);
+        $("#account" + target.name + "Error", this.el).hide();
+    },
+
+    goBack: function(event) {
+        app.router.navigate(this.backAction, {trigger:true});
+    },
+
+    showFieldError: function(field, message, error) {
+console.log('showfielderror:' + field + ';' + message + ';' + error);
+        var errorEl = $("#meeting" + field + "Error", this.el);
+        errorEl.addClass(error ? "count-negative" : "count-other");
+        errorEl.html(message);
+        errorEl.show();
+    },
+
+    handleError: function(error) {
+        var that = this;
+        if (error.type === "RestError") {
+            _.each(error.details, function(detail) {
+                if (detail.fields == null || detail.fields.length == 0) { alert(detail.message); }
+                else {_.each(detail.fields, function(field) {that.showFieldError(field, detail.message);});}
+            });
+        }
+        else if (error.type == "ConflictError") {
+            _.each(error.remoteChanges, function(field) {
+                var conflict = error.conflictingChanges.indexOf(field) >=0;
+                that.showFieldError(field, "Server: " +  error.theirs[field], conflict);
+            });
+            $(".merge", this.el).show();
+            $(".overwrite", this.el).show();
+        }
+    },
+
+    getSaveOptions: function(mergeMode, cacheMode) {
+        var that = this;
+        return {
+            cacheMode: cacheMode,
+            mergeMode: mergeMode,
+           // success: function() { console.log('save success...'); app.router.navigate(that.backAction, {trigger:true}); },
+           // success without navigating away::
+            success: function() { console.log('save success...'); },
+            error: function(data, err, options) { that.handleError(new Force.Error(err)); }
+        };
+    },
+
+    save: function() {
+    
+console.log('doing save');
+console.log('ALWAYS savemerge. we win. doing save');
+    
+        //this.model.save(null, this.getSaveOptions(Force.MERGE_MODE.MERGE_FAIL_IF_CHANGED));
+        
+        
+        this.model.save(null, this.getSaveOptions(Force.MERGE_MODE.MERGE_ACCEPT_YOURS));
+        
+    },
+
+    saveMerge: function() {
+        this.model.save(null, this.getSaveOptions(Force.MERGE_MODE.MERGE_ACCEPT_YOURS));
+    },
+
+    saveOverwrite: function() {
+        this.model.save(null, this.getSaveOptions(Force.MERGE_MODE.OVERWRITE));
+    },
+
+    toggleDelete: function() {
+        if (this.model.get("__locally_deleted__")) {
+            this.model.set("__locally_deleted__", false);
+            this.model.save(null, this.getSaveOptions(null, Force.CACHE_MODE.CACHE_ONLY));
+        }
+        else {
+            this.model.destroy({
+                success: function(data) {
+                    app.router.navigate("#", {trigger:true});
+                },
+                error: function(data, err, options) {
+                    var error = new Force.Error(err);
+                    alert("Failed to delete account: " + (error.type === "RestError" ? error.details[0].message : "Remote change detected - delete aborted"));
+                }
+            });
+        }
+    }
+});
+
+
+    
+    
+    
+    
+
+
+// ----------------------------------------------- The Application Router ------------------------------------------ //
+
+app.Router = Backbone.StackRouter.extend({
+
+
+
+    routes: {
+        "": "indexPage",
+        "list": "list",
+        //"add": "addAccount",
+        "edit/meeting/:id": "editMeeting",
+        "sync":"sync",
+        "products/:id": "viewProducts",
+        "selectProducts/:id": "selectProducts",
+        "capabilities/:id": "viewCapabilities",
+        "selectCapabilities/:id": "selectCapabilities",
+        "funds/:id": "viewFunds",
+        "selectFunds/:id": "selectFunds",
+        "opportunities/:id": "viewOpportunities",
+        "selectOpportunities/:id": "selectOpportunities"
+        
+    }
+    
+    ,
+
+
+    syncOrContinue: function(pContinueFunc)
+    {
+        var that = this;
+        if (app.offlineTracker.get("isOnline")) {
+
+//console.log('check for sync 1.5 ' + app.offlineTracker.get("isOnline"));
+            app.localMeetings.fetch({
+                success : function() {
+//console.log('check for sync 2');
+                    app.localPortfolioMeetings.fetch({
+                        success: function() {
+//console.log('check for sync 3');
+                            app.localCapabilityMeetings.fetch({
+                                success: function() {
+                                    app.localInternalfundMeetings.fetch({
+                                        success: function() {
+                                    
+                                            app.localOpportunityMeetings.fetch({
+                                                success: function() {
+                                    
+                                                    if (app.localMeetings.size() > 0
+                                                        || app.localPortfolioMeetings.size() > 0
+                                                        ||  app.localCapabilityMeetings.size() > 0
+                                                        ||  app.localInternalfundMeetings.size() > 0
+                                                        ||  app.localOpportunityMeetings.size() > 0)
+                                        
+                                                        that.slidePage(app.syncPage);
+                                                    else pContinueFunc();
+                                    
+                                                }
+                                            })
+
+                                    
+                                        }
+                                    })
+                                }
+                            })
+                        }
+                    })
+                }
+            
+            });
+        }
+    }
+    
+    ,
+
+    // a function to ALWAYS FORCE SYNC FIRST if we're online and there's something to sync...
+    checkForSync: function()
+    {
+//console.log('check for sync 1 ' + app.offlineTracker.get("isOnline"));
+        var that = this;
+        if (app.offlineTracker.get("isOnline")) {
+
+//console.log('check for sync 1.5 ' + app.offlineTracker.get("isOnline"));
+            app.localMeetings.fetch({
+                success : function() {
+//console.log('check for sync 2');
+                    app.localPortfolioMeetings.fetch({
+                        success: function() {
+//console.log('check for sync 3');
+                            app.localCapabilityMeetings.fetch({
+                                success: function() {
+                                    app.localInternalfundMeetings.fetch({
+                                        success: function() {
+                                    
+                                            app.localOpportunityMeetings.fetch({
+                                                success: function() {
+                                    
+                                                    if (app.localMeetings.size() > 0
+                                                        || app.localPortfolioMeetings.size() > 0
+                                                        ||  app.localCapabilityMeetings.size() > 0
+                                                        ||  app.localInternalfundMeetings.size() > 0
+                                                        ||  app.localOpportunityMeetings.size() > 0)
+                                        
+                                                        that.slidePage(app.syncPage);
+                                    
+                                                }
+                                            })
+
+                                    
+                                        }
+                                    })
+                                }
+                            })
+                        }
+                    })
+                }
+            
+            });
+        }
+    },
+
+
+    indexPage: function () {
+    
+        this.checkForSync();
+    
+        app.router.navigate("#list", {trigger:true});
+    },
+
+    setupCaches: function() {
+    
+    
+        //app.cache is a tempting name but you need a NEW CACHE for each OBJECT
+        //BECAUSE each "cache" is a soup
+        // Cache for offline support
+        app.cacheMeetings = new Force.StoreCache("meetings", [ {path:"Name", type:"string"}
+                                                                , {path:"Start_Date_Time__c", type:"integer"}
+                                                                , {path:"Primary_Contact__r.Name", type:"string"} ]);
+
+        // Cache for conflict detection 
+        app.cacheForOriginalMeetings = new Force.StoreCache("original-meetings");
+
+
+        // cache for picklists...
+        app.cachePicklists = new Force.StoreCache("picklists", [{path:"a_Object", type:"string"},
+                                                                {path:"a_Field", type:"string"},
+                                                                {path:"label", type:"string"}]);
+        //try without a conflict detection as we're not conflict detecting
+        
+        
+        // cache for Client Portfolios
+        app.ClientPortfolio__ccache = new Force.StoreCache("clientportfolios",
+                                                        [ {path:"Name", type:"string"}]);
+        // cache for Client Portfolios
+        app.Capability__ccache = new Force.StoreCache("capabilities",
+                                                        [ {path:"Name", type:"string"}]);
+        // cache for Internal Funds
+        app.Internal_Fund__ccache = new Force.StoreCache("internalfunds",
+                                                        [ {path:"Name", type:"string"}]);
+        // cache for Opportunities
+        app.Opportunitycache = new Force.StoreCache("opportunities",
+                                                        [ {path:"Account.Name", type:"string"}]);
+                                         
+        
+        // Cache for offline support
+        app.Portfolio_Meeting__ccache = new Force.StoreCache("portfoliomeetings", [ {path:"Name", type:"string"}
+                                                                , {path:"Meeting__c", type:"string"}
+                                                                , {path:"Client_Portfolio__r.Name", type:"string"} ]);
+
+        // Cache for conflict detection 
+        app.Portfolio_Meeting__corigcache = new Force.StoreCache("original-portfoliomeetings");
+        
+        // Cache for offline support
+        app.Capability_Meeting__ccache = new Force.StoreCache("capabilitymeetings", [ {path:"Name", type:"string"}
+                                                                , {path:"Meeting__c", type:"string"}
+                                                                , {path:"Capability__r.Name", type:"string"} ]);
+
+        // Cache for conflict detection 
+        app.Capability_Meeting__corigcache = new Force.StoreCache("original-capabilitymeetings");
+        
+        // Cache for offline support
+        app.Internal_Fund_Meeting__ccache = new Force.StoreCache("internalfundmeetings", [ {path:"Name", type:"string"}
+                                                                , {path:"Meeting__c", type:"string"}
+                                                                , {path:"Internal_Fund__r.Name", type:"string"} ]);
+        // Cache for conflict detection
+        app.Internal_Fund_Meeting__corigcache = new Force.StoreCache("original-internalfundmeetings");
+        
+        // Cache for offline support
+        app.Opportunity_Meeting__ccache = new Force.StoreCache("opportunitymeetings", [ {path:"Name", type:"string"}
+                                                                , {path:"Meeting__c", type:"string"}
+                                                                , {path:"Opportunity__r.Account.Name", type:"string"} ]);
+        // Cache for conflict detection
+        app.Opportunity_Meeting__corigcache = new Force.StoreCache("original-opportunitymeetings");
+
+                            
+                            
+
+
+        return $.when(app.cacheMeetings.init(),
+                      app.cacheForOriginalMeetings.init(),
+                      app.cachePicklists.init(),
+                      app.ClientPortfolio__ccache.init(),
+                      app.Capability__ccache.init(),
+                      app.Internal_Fund__ccache.init(),
+                      app.Opportunitycache.init(),
+                      app.Portfolio_Meeting__ccache.init(),
+                      app.Portfolio_Meeting__corigcache.init(),
+                      app.Capability_Meeting__ccache.init(),
+                      app.Capability_Meeting__corigcache.init(),
+                      app.Internal_Fund_Meeting__ccache.init(),
+                      app.Internal_Fund_Meeting__corigcache.init(),
+                      app.Opportunity_Meeting__ccache.init(),
+                      app.Opportunity_Meeting__corigcache.init()
+                      );
+    },
+
+    initialize: function() {
+        Backbone.Router.prototype.initialize.call(this);
+
+        // Setup caches
+        this.setupCaches();
+        
+        
+
+        // Initializing offline tracker 
+        app.offlineTracker = new app.models.OfflineTracker({isOnline: true});
+
+        // Collection behind search screen
+        app.searchResults = new app.models.Meeting__cCollection();
+        
+        // Collection behind client portfolios screen, only one as it's always the same thang
+        app.clientPortfolios = new app.models.Portfolio__cCollection();
+        
+        //collection behind add-capabilities screen
+        app.capabilities = new app.models.Capability__cCollection();
+        
+        //collection behind add-internalfunds screen
+        app.internalfunds = new app.models.Pooled_Fund__cCollection();
+        //collection behind add-opportunitys screen
+        app.opportunities = new app.models.OpportunityCollection();
+        
+        
+        // for ALL meetings (init)
+        //portfoliomeetings to init later; fix the no-meeting-id issue
+        app.portfolioMeetingsAll = new app.models.Portfolio_Meeting__cAllCollection();
+        
+        //capabilitymeetings to init later; fix the no-meeting-id issue
+        app.capabilityMeetingsAll = new app.models.Capability_Meeting__cAllCollection();
+        
+        app.internalfundMeetingsAll = new app.models.Internal_Fund_Meeting__cAllCollection();
+        app.opportunityMeetingsAll = new app.models.Opportunity_Meeting__cAllCollection();
+        //end for all meetings
+        
+        
+        
+        //for just-one-meeting
+        app.portfolioMeetings = new app.models.Portfolio_Meeting__cCollection();
+        app.capabilityMeetings = new app.models.Capability_Meeting__cCollection();
+        app.internalfundMeetings = new app.models.Internal_Fund_Meeting__cCollection();
+        app.opportunityMeetings = new app.models.Opportunity_Meeting__cCollection();
+        //end for just-one-meeting
+        
+        // Collection behind sync screen
+        app.localMeetings = new app.models.Meeting__cCollection();
+        app.localMeetings.config = {type:"cache", cacheQuery: {queryType:"exact", indexPath:"__local__", matchKey:true, order:"ascending", pageSize:250}};
+
+        // Collection behind sync screen of meeting-portfolio
+        app.localPortfolioMeetings = new app.models.Portfolio_Meeting__cCollection();
+        app.localPortfolioMeetings.config = {type:"cache", cacheQuery: {queryType:"exact", indexPath:"__local__", matchKey:true, order:"ascending", pageSize:250}};
+
+        // Collection behind sync screen of meeting-capability
+        app.localCapabilityMeetings = new app.models.Capability_Meeting__cCollection();
+        app.localCapabilityMeetings.config = {type:"cache", cacheQuery: {queryType:"exact", indexPath:"__local__", matchKey:true, order:"ascending", pageSize:250}};
+
+        // Collection behind sync screen of meeting-internalfund
+        app.localInternalfundMeetings = new app.models.Internal_Fund_Meeting__cCollection();
+        app.localInternalfundMeetings.config = {type:"cache", cacheQuery: {queryType:"exact", indexPath:"__local__", matchKey:true, order:"ascending", pageSize:250}};
+
+        // Collection behind sync screen of meeting-opportunity
+        app.localOpportunityMeetings = new app.models.Opportunity_Meeting__cCollection();
+        app.localOpportunityMeetings.config = {type:"cache", cacheQuery: {queryType:"exact", indexPath:"__local__", matchKey:true, order:"ascending", pageSize:250}};
+
+
+        //get the defaults for everything
+        app.searchResults.fetch({success:function(){
+            //fetch portfolio-meetings
+            app.portfolioMeetingsAll.fetch();
+            //fetch capability-meetings
+            app.capabilityMeetingsAll.fetch();
+            //fetch internalfund-meetings
+            app.internalfundMeetingsAll.fetch();
+            //fetch opportunity-meetings
+            app.opportunityMeetingsAll.fetch();
+            //fetch default portfolios
+            app.clientPortfolios.fetch();
+            //fetch capabilities
+            app.capabilities.fetch();
+            //fetch internalfunds
+            app.internalfunds.fetch();
+            //fetch opportunities
+            app.opportunities.fetch();
+        }});
+
+
+        // Collection of Picklist
+        /**/
+//console.log('picklist collection');
+        app.picklistValues = new app.models.PicklistValueCollection();
+//console.log('picklist criteria');
+        app.picklistValues.setCriteria("Meeting__c", "Meeting_Type__c");
+//console.log('picklist fetch');
+        /**/
+        app.picklistValues.fetch();
+
+        
+        //when sync?
+//console.log('app.searchResults: ' + app.searchResults);
+        // We keep a single instance of SearchPage PER SEARCH dumboid/ SyncPage and EditAccountPage
+        app.searchPage = new app.views.SearchPage({model: app.searchResults});
+        app.searchPage.listView = new app.views.AnythingListView({model: app.searchPage.model});
+        //app.searchPage.listView = new app.views.MeetingListView({model: app.searchPage.model});
+        app.searchPage.listView.listItemView = app.views.MeetingListItemView;
+        app.searchPage.TitleValue = "Meetings";
+        app.searchPage.ShowGetSummaries = true;
+        app.searchPage.ShowRefresh = true;
+        app.searchPage.ShowNotFound = true;
+//console.log('app.searchPage: ' + app.searchPage);
+        //NOW we want another search page for bleddy Client Portfolios
+        
+        /**/
+        app.clientPortfoliosPage = new app.views.SearchPage({model: app.clientPortfolios});
+        app.clientPortfoliosPage.listView = new app.views.AnythingListView({model: app.clientPortfoliosPage.model});
+        app.clientPortfoliosPage.listView.listItemView = app.views.ClientPortfolioListItemView;
+        app.clientPortfoliosPage.TitleValue = "Add Portfolios";
+        app.clientPortfoliosPage.ShowDone = true; //backAction use the global meeting thing
+        app.clientPortfoliosPage.backAction = function(){  console.log('override backAction'); return "products/" + app.meeting.get("Id"); };
+        app.clientPortfoliosPage.ShowSave = false;
+        // dont sync dude, it's a checker instead so we can extend a checker thingee
+
+        
+        app.capabilitiesPage = new app.views.SearchPage({model: app.capabilities});
+        app.capabilitiesPage.listView = new app.views.AnythingListView({model: app.capabilitiesPage.model});
+        app.capabilitiesPage.listView.listItemView = app.views.CapabilityListItemView;
+        app.capabilitiesPage.TitleValue = "Add Capabilities";
+        app.capabilitiesPage.ShowDone = true; //backAction use the global meeting thing
+        app.capabilitiesPage.backAction = function(){  console.log('override backAction'); return "capabilities/" + app.meeting.get("Id"); };
+        app.capabilitiesPage.ShowSave = false;
+         
+        app.internalfundsPage = new app.views.SearchPage({model: app.internalfunds});
+        app.internalfundsPage.listView = new app.views.AnythingListView({model: app.internalfundsPage.model});
+        app.internalfundsPage.listView.listItemView = app.views.InternalfundListItemView;
+        app.internalfundsPage.TitleValue = "Add Funds";
+        app.internalfundsPage.ShowDone = true; //backAction use the global meeting thing
+        app.internalfundsPage.backAction = function(){  console.log('override backAction'); return "funds/" + app.meeting.get("Id"); };
+        app.internalfundsPage.ShowSave = false;
+         
+        app.opportunitiesPage = new app.views.SearchPage({model: app.opportunities});
+        app.opportunitiesPage.listView = new app.views.AnythingListView({model: app.opportunitiesPage.model});
+        app.opportunitiesPage.listView.listItemView = app.views.OpportunityListItemView;
+        app.opportunitiesPage.TitleValue = "Add Opportunities";
+        app.opportunitiesPage.TitleShortValue = "Add Opps";
+        app.opportunitiesPage.ShowDone = true; //backAction use the global meeting thing
+        app.opportunitiesPage.backAction = function(){  console.log('override backAction'); return "opportunities/" + app.meeting.get("Id"); };
+        app.opportunitiesPage.ShowSave = false;
+        
+        
+        
+        
+        
+        
+        //and how will we give it a refernce to the meeting? use the global one...
+        
+        //AND set the list view stiuff
+        //AND set the object title...
+        //AND set whether to show the BACK button 
+        /**
+        app.portfolioMeetingsPage = new app.views.SearchPage({model: app.Portfolio_Meeting__ccache});
+        app.portfolioMeetingsPage.listView = new app.views.AnythingListView({model: app.portfolioMeetingsPage.model});
+        app.portfolioMeetingsPage.listView.listItemView = app.views.PortfolioListItemView;
+        app.portfolioMeetingsPage.TitleValue = "Portfolios";
+        **/
+
+        app.syncPage = new app.views.SyncPage({model: app.localMeetings});
+        
+        //need a spesh view that has meeting in, but can't see meeting. and why
+        //is it showing the wrong listitems? is it using the same list? should be a NEW anythinglistview
+        app.syncPage.addModel(app.localPortfolioMeetings, app.views.PortfolioListItemSyncView);
+        app.syncPage.addModel(app.localCapabilityMeetings, app.views.CapabilityMeetingListItemSyncView);
+        app.syncPage.addModel(app.localInternalfundMeetings, app.views.InternalfundMeetingListItemSyncView);
+        app.syncPage.addModel(app.localOpportunityMeetings, app.views.OpportunityMeetingListItemSyncView);
+        app.editPage = new app.views.EditMeetingPage();
+
+        
+        
+        //try a picklist for meeting c types
+        app.MeetingTypePicklist = new app.models.PicklistValueCollection({model: app.picklistValues});
+        
+    },
+    
+
+    list: function() {
+        this.checkForSync();
+        app.searchResults.fetch();
+        // Show page right away - list will redraw when data comes in
+        //SLIDEFIX from slidePage
+        this.slidePage(app.searchPage);
+    },
+
+
+//    addAccount: function() {
+//        app.editPage.model = new app.models.Account({Id: null});
+//        this.slidePage(app.editPage);
+//    },
+
+
+    viewProducts: function(id) {
+        this.checkForSync();
+        var that = this;
+//console.log('view products. whatsa holup');
+        app.portfolioMeetings.fetch({
+            success: function(data) {
+         
+            
+                
+        //get any checked items out of the picker.. genius? put em at the top...
+        //not exactly genius. need to also remove the checkboxes otherwise they
+        //keep being added to every list we view. thought this list would just die
+        //but it doesnt
+                
+                cModels = app.clientPortfoliosPage.model.models; //bruv said this speeds it up
+                
+                aAlreadyGot = app.portfolioMeetings.pluck("Client_Portfolio__c");
+                    
+
+//console.log("we have got: " + aAlreadyGot);
+                for (var ix = cModels.length ; --ix > -1; ) {
+                    if (cModels[ix].get("Checked"))
+                    {
+//console.log("this is one portfolio in portfolios dewd " + cModels[ix]);
+                        //untick it now..
+                        cModels[ix].set("Checked",false);
+                        
+                        if (aAlreadyGot.indexOf(cModels[ix].get("Id")) !== -1) continue;
+                        
+                        
+                        //create an entry
+                        //have to set EVERY field used in template else templater cries
+                        // 'can't find variable [the one you didnt set]'
+                        // I say get over it
+                        // using .set didn't do what it shouldve ie set the attributes.
+                        // instead it jus setted properties on the object.
+                        // this mostly worked but in some bits of smartsync.js it falls over
+                        // rather than bend smartsync.js I will do what Backbone says you should not do,
+                        // and reference the attributes directly. juhana on the forums says to do that.
+                        
+                        // when the attributes data is set like this, the template is looking for the field info
+                        // in the object and not finding it. this is painful
+                        // howboutit we put sobejctType in the attributes but everytthing else NOT?
+                        
+                        /**
+                        this is "mixed"
+                        but it needs to be double mixed to work - type needs to be in 2 places
+                        **
+                        console.log('make one 1 ' + app.models.Portfolio_Meeting__c.sobjectType);
+                        console.log('make one 2 ' + id);
+                        console.log('make one 3 ' + cModels[ix].get("Id"));
+                        
+                        /**
+                        big dumps
+                       
+                        for (var k in app.models.Portfolio_Meeting__c) {
+                            console.log ('APC ' + k + ':: ' + app.models.Portfolio_Meeting__c[k]);
+                            for (var kk in app.models.Portfolio_Meeting__c[k]) {
+                                console.log ('APC k ' + k + ':' + kk + ':: ' + app.models.Portfolio_Meeting__c[k][kk]);
+                            
+                            }
+                        }
+                         **/
+                        var pm = new app.models.Portfolio_Meeting__c({
+                            attributes: {
+                                type: 'Portfolio_Meeting__c'
+                            },
+                            //type: app.models.Portfolio_Meeting__c.sobjectType,
+                            Meeting__c: id,
+                            Client_Portfolio__c: cModels[ix].get("Id"),
+                            Client_Portfolio__r: {
+                                Name: cModels[ix].get("Name"),
+                                Scheme_Name__c: cModels[ix].get("Scheme_Name__c"),
+                                Market_Value_GBP__c: cModels[ix].get("Market_Value_GBP__c"),
+                                Market_Value_Base_Currency__c: cModels[ix].get("Market_Value_Base_Currency__c"),
+                                Base_Currency__c: cModels[ix].get("Base_Currency__c")
+                            },
+                            __locally_deleted__:false
+                        });
+                        
+                        /**
+                        this is "all set in attributes"
+                        pm = new app.models.Portfolio_Meeting__c({
+                            attributes: {
+                                type: app.models.Portfolio_Meeting__c.sobjectType,
+                                Meeting__c: id,
+                                Client_Portfolio__c: cModels[ix].get("Id"),
+                                Client_Portfolio__r: {
+                                    Name: cModels[ix].get("Name"),
+                                    Scheme_Name__c: cModels[ix].get("Scheme_Name__c"),
+                                    Market_Value_GBP__c: cModels[ix].get("Market_Value_GBP__c"),
+                                    Market_Value_Base_Currency__c: cModels[ix].get("Market_Value_Base_Currency__c"),
+                                    Base_Currency__c: cModels[ix].get("Base_Currency__c")
+                               }
+                            }
+                        });
+                        **/
+                        
+                        
+                        /*
+                        this is "all set directly on the obj
+                        pm.set("type",pm.sobjectType) //local version, created locally, doesnt have its type set. whatsthatabout
+                        pm.set("Meeting__c",id);
+                        pm.set("Client_Portfolio__c", cModels[ix].get("Id"));
+                        //build sub-object ?
+                        pm.set("Client_Portfolio__r",
+                                {"Name": cModels[ix].get("Name"),
+                                 "Scheme_Name__c": cModels[ix].get("Scheme_Name__c"),
+                                 "Market_Value_GBP__c": cModels[ix].get("Market_Value_GBP__c"),
+                                 "Market_Value_Base_Currency__c": cModels[ix].get("Market_Value_Base_Currency__c"),
+                                 "Base_Currency__c": cModels[ix].get("Base_Currency__c")
+                               }
+                        );
+                        */
+                        app.portfolioMeetings.unshift(pm); //is it trying to commit these immediately? maybe that's good?
+                        //we can commit them immediately:
+                        pm.save();
+                    
+                    }
+                }
+                       
+                app.portfolioMeetingsPage = new app.views.SearchPage({model: app.portfolioMeetings});
+                app.portfolioMeetingsPage.listView = new app.views.AnythingListView({model: app.portfolioMeetingsPage.model});
+                
+                app.portfolioMeetingsPage.listView.listItemView = app.views.PortfolioListItemView;
+                app.portfolioMeetingsPage.TitleValue = "Portfolios";
+                app.portfolioMeetingsPage.ShowBack = true;
+                app.portfolioMeetingsPage.backAction = function(){  console.log('override backAction'); return "edit/meeting/" + id; };
+                //this is called
+                app.portfolioMeetingsPage.listView.backAction = function(){  console.log('override backAction prodMeets ListView'); return "edit/meeting/" + id; };
+                app.portfolioMeetingsPage.ShowAdd = true;
+                app.portfolioMeetingsPage.addAction = function(){ if(!app.offlineTracker.get("isOnline")) {navigator.notification.alert("Can't add new portfolios when offline. Please wait until you have a good connection.",null,app.appTitle); return "";}   console.log('override addAction for PMs ' + id); return "selectProducts/" + id; };
+                
+                app.portfolioMeetingsPage.ShowSave = true;
+                //SLIDEFIX that.slidePage(app.portfolioMeetingsPage);
+                that.slidePage(app.portfolioMeetingsPage);
+            },
+            error: function(a0, a1, a2) {
+//console.log('a0 ' + JSON.stringify(a0));
+
+
+//console.log('a1 ' + JSON.stringify(a1));
+
+//console.log('a2 ' + JSON.stringify(a2));
+            
+                navigator.notification.alert("Failed to get portfolio meetings for edit",null,app.appTitle);
+            }
+        });
+    
+    
+    },
+    
+    selectProducts: function(id) {
+        this.checkForSync();
+        var that = this;
+        
+        //loading screen...
+        
+        app.clientPortfolios.fetch({
+            
+            success: function(data) {
+                //SLIDEFIX that.slidePage(app.clientPortfoliosPage);
+                that.slideForward(app.clientPortfoliosPage);
+            },
+            error: function() {
+                navigator.notification.alert("Failed to get client portfolios for edit",null,app.appTitle);
+            }
+        });
+    
+    
+    },
+
+
+    viewCapabilities: function(id) {
+        this.checkForSync();
+        var that = this;
+        
+        app.capabilityMeetings.fetch({
+            success: function(data) {
+         
+                
+                cModels = app.capabilitiesPage.model.models; //bruv said this speeds it up
+                
+                aAlreadyGot = app.capabilityMeetings.pluck("Capability__c");
+                    
+
+//console.log("we have got: " + aAlreadyGot);
+                for (var ix = cModels.length ; --ix > -1; ) {
+                    if (cModels[ix].get("Checked"))
+                    {
+//console.log("this is one portfolio in portfolios dewd " + cModels[ix]);
+                        //untick it now..
+                        cModels[ix].set("Checked",false);
+                        
+                        if (aAlreadyGot.indexOf(cModels[ix].get("Id")) !== -1) continue;
+                        
+                        var pm = new app.models.Capability_Meeting__c({
+                            attributes: {
+                                type: 'Capability_Meeting__c'
+                            },
+                            type: 'Capability_Meeting__c',
+                            Meeting__c: id,
+                            Capability__c: cModels[ix].get("Id"),
+                            Capability__r: {
+                                Name: cModels[ix].get("Name"),
+                                Asset_Class__c: cModels[ix].get("Asset_Class__c"),
+                                Asset_Sub_Class__c: cModels[ix].get("Asset_Sub_Class__c")
+                            },
+                            __locally_deleted__:false
+                        });
+                    
+                        pm.save();
+                        app.capabilityMeetings.unshift(pm);
+                    
+                    }
+                }
+                       
+                app.capabilityMeetingsPage = new app.views.SearchPage({model: app.capabilityMeetings});
+                app.capabilityMeetingsPage.listView = new app.views.AnythingListView({model: app.capabilityMeetingsPage.model});
+                app.capabilityMeetingsPage.listView.listItemView = app.views.CapabilityMeetingListItemView;
+                app.capabilityMeetingsPage.TitleValue = "Capabilities";
+                app.capabilityMeetingsPage.ShowBack = true;
+                app.capabilityMeetingsPage.backAction = function(){  console.log('override backAction'); return "edit/meeting/" + id; };
+                app.capabilityMeetingsPage.listView.backAction = function(){  console.log('override backAction'); return "edit/meeting/" + id; };
+                app.capabilityMeetingsPage.ShowAdd = true;
+                app.capabilityMeetingsPage.addAction = function(){ if(!app.offlineTracker.get("isOnline")) {navigator.notification.alert("Can't add new capabilities when offline. Please wait until you have a good connection.",null,app.appTitle); return "";}   console.log('override addAction for PMs ' + id); return "selectCapabilities/" + id; };
+                
+                app.capabilityMeetingsPage.ShowSave = true;
+                //SLIDEFIX that.slidePage(app.portfolioMeetingsPage);
+                that.slidePage(app.capabilityMeetingsPage);
+            },
+            error: function() {
+                navigator.notification.alert("Failed to get capability meetings for edit",null,app.appTitle);
+            }
+        });
+    
+    
+    },
+    
+    selectCapabilities: function(id) {
+        this.checkForSync();
+        var that = this;
+        
+        //loading screen...
+        
+        app.capabilities.fetch({
+            
+            success: function(data) {
+                //SLIDEFIX that.slidePage(app.clientPortfoliosPage);
+                that.slideForward(app.capabilitiesPage);
+            },
+            error: function() {
+                navigator.notification.alert("Failed to get capabilities for edit",null,app.appTitle);
+            }
+        });
+    
+    
+    },
+
+
+
+    viewFunds: function(id) {
+        this.checkForSync();
+        var that = this;
+        app.internalfundMeetings.fetch({
+            success: function(data) {
+         
+  
+                
+                cModels = app.internalfundsPage.model.models; //bruv said this speeds it up
+                
+                aAlreadyGot = app.internalfundMeetings.pluck("Internal_Fund__c");
+                    
+
+console.log("we have got: " + aAlreadyGot);
+                for (var ix = cModels.length ; --ix > -1; ) {
+                    if (cModels[ix].get("Checked"))
+                    {
+console.log("this is one portfolio in portfolios dewd " + cModels[ix]);
+                        //untick it now..
+                        cModels[ix].set("Checked",false);
+                        
+                        if (aAlreadyGot.indexOf(cModels[ix].get("Id")) !== -1) continue;
+                        
+                        var pm = new app.models.Internal_Fund_Meeting__c({
+                            attributes: {
+                                type: 'Internal_Fund_Meeting __c'
+                            },
+                            Meeting__c: id,
+                            Internal_Fund__c: cModels[ix].get("Id"),
+                            Internal_Fund__r: {
+                                Name: cModels[ix].get("Name"),
+                                Capability2__c: cModels[ix].get("Capability2__c"),
+                                Market_Value_GBP__c: cModels[ix].get("Market_Value_GBP__c"),
+                                Market_Value_Base_Currency__c: cModels[ix].get("Market_Value_Base_Currency__c"),
+                                Base_Currency__c: cModels[ix].get("Base_Currency__c")
+                            },
+                            __locally_deleted__:false
+                        });
+                        
+
+                        app.internalfundMeetings.unshift(pm); //is it trying to commit these immediately? maybe that's good?
+                        //we can commit them immediately:
+                        pm.save();
+                    
+                    }
+                }
+                       
+                app.internalfundMeetingsPage = new app.views.SearchPage({model: app.internalfundMeetings});
+                app.internalfundMeetingsPage.listView = new app.views.AnythingListView({model: app.internalfundMeetingsPage.model});
+                
+                app.internalfundMeetingsPage.listView.listItemView = app.views.InternalfundMeetingListItemView;
+                app.internalfundMeetingsPage.TitleValue = "Funds";
+                app.internalfundMeetingsPage.ShowBack = true;
+                app.internalfundMeetingsPage.backAction = function(){  console.log('override backAction'); return "edit/meeting/" + id; };
+                //this is called
+                app.internalfundMeetingsPage.listView.backAction = function(){  console.log('override backAction prodMeets ListView'); return "edit/meeting/" + id; };
+                app.internalfundMeetingsPage.ShowAdd = true;
+                app.internalfundMeetingsPage.addAction = function(){ if(!app.offlineTracker.get("isOnline")) {navigator.notification.alert("Can't add new funds when offline. Please wait until you have a good connection.",null,app.appTitle); return "";}   console.log('override addAction for IFs ' + id); return "selectFunds/" + id; };
+                
+                app.internalfundMeetingsPage.ShowSave = true;
+                that.slidePage(app.internalfundMeetingsPage);
+            },
+            error: function(a0, a1, a2) {
+
+                navigator.notification.alert("Failed to get internal fund meetings for edit",null,app.appTitle);
+            }
+        });
+    
+    
+    },
+    
+    selectFunds: function(id) {
+        this.checkForSync();
+        var that = this;
+console.log('in selectFunds');
+        
+        //loading screen...
+        
+        app.internalfunds.fetch({
+            
+            success: function(data) {
+                //SLIDEFIX that.slidePage(app.clientPortfoliosPage);
+                that.slideForward(app.internalfundsPage);
+            },
+            error: function() {
+                navigator.notification.alert("Failed to get internal funds for edit",null,app.appTitle);
+            }
+        });
+    
+    
+    },
+
+
+
+    viewOpportunities: function(id) {
+        this.checkForSync();
+        var that = this;
+        app.opportunityMeetings.fetch({
+            success: function(data) {
+         
+  
+                
+                cModels = app.opportunitiesPage.model.models; //bruv said this speeds it up
+                
+                aAlreadyGot = app.opportunityMeetings.pluck("Opportunity__c");
+                    
+                for (var ix = cModels.length ; --ix > -1; ) {
+                    if (cModels[ix].get("Checked"))
+                    {
+                        //untick it now..
+                        cModels[ix].set("Checked",false);
+                        
+                        if (aAlreadyGot.indexOf(cModels[ix].get("Id")) !== -1) continue;
+                        
+                        var pm = new app.models.Opportunity_Meeting__c({
+                            attributes: {
+                                type: 'Opportunity_Meeting __c'
+                            },
+                            
+                  //  ,"Opportunity__r.Account.Name","Opportunity__r.Amount", "Opportunity__r.CurrencyIsoCode", "Opportunity__r.Capability_Name__c","Opportunity__r.StageName","Opportunity__r.CloseDate"]
+        
+                            Meeting__c: id,
+                            Opportunity__c: cModels[ix].get("Id"),
+                            Opportunity__r: {
+                                Name: cModels[ix].get("Name"),
+                                Account: {
+                                    Name: cModels[ix].get("Account")["Name"]
+                                },
+                                Amount: cModels[ix].get("Amount"),
+                                CurrencyIsoCode: cModels[ix].get("CurrencyIsoCode"),
+                                Capability_Name__c: cModels[ix].get("Capability_Name__c"),
+                                StageName: cModels[ix].get("StageName"),
+                                CloseDate: cModels[ix].get("CloseDate")
+                            },
+                            __locally_deleted__:false
+                        });
+                        
+
+                        app.opportunityMeetings.unshift(pm); //is it trying to commit these immediately? maybe that's good?
+                        //we can commit them immediately:
+                        pm.save();
+                    
+                    }
+                }
+                       
+                app.opportunityMeetingsPage = new app.views.SearchPage({model: app.opportunityMeetings});
+                app.opportunityMeetingsPage.listView = new app.views.AnythingListView({model: app.opportunityMeetingsPage.model});
+                
+                app.opportunityMeetingsPage.listView.listItemView = app.views.OpportunityMeetingListItemView;
+                app.opportunityMeetingsPage.TitleValue = "Opportunities";
+                app.opportunityMeetingsPage.ShowBack = true;
+                app.opportunityMeetingsPage.backAction = function(){  console.log('override backAction'); return "edit/meeting/" + id; };
+                //this is called
+                app.opportunityMeetingsPage.listView.backAction = function(){  console.log('override backAction prodMeets ListView'); return "edit/meeting/" + id; };
+                app.opportunityMeetingsPage.ShowAdd = true;
+                app.opportunityMeetingsPage.addAction = function(){ if(!app.offlineTracker.get("isOnline")) {navigator.notification.alert("Can't add new oportunities when offline. Please wait until you have a good connection.",null,app.appTitle); return "";}   console.log('override addAction for IFs ' + id); return "selectOpportunities/" + id; };
+                
+                app.opportunityMeetingsPage.ShowSave = true;
+                that.slidePage(app.opportunityMeetingsPage);
+            },
+            error: function(a0, a1, a2) {
+
+                navigator.notification.alert("Failed to get opportunity meetings for edit",null,app.appTitle);
+            }
+        });
+    
+    
+    },
+    
+    selectOpportunities: function(id) {
+        this.checkForSync();
+        var that = this;
+console.log('in selectFunds');
+        
+        //loading screen...
+        
+        app.opportunities.fetch({
+            
+            success: function(data) {
+                //SLIDEFIX that.slidePage(app.clientPortfoliosPage);
+                that.slideForward(app.opportunitiesPage);
+            },
+            error: function() {
+                navigator.notification.alert("Failed to get opportunities for edit",null,app.appTitle);
+            }
+        });
+    
+    
+    },
+
+
+
+    editMeeting: function(id) {
+ console.log("Editing " + id);
+        this.checkForSync();
+ console.log("ran sync check editing  " + id);
+        var that = this;
+        app.meeting = new app.models.Meeting__c({Id: id});
+        
+        
+        //get the picklist data here, idiot...
+        app.meetingTypePicklist = new app.models.FieldPicklistValueCollection();
+        app.meetingTypePicklist.setCacheCriteria("Meeting__c","Meeting_Type__c");
+console.log('fetching meeting type picklist');
+        app.meetingTypePicklist.fetch({
+            success: function(data) {
+                app.meeting.fetch({
+                    success: function(data) {
+                        app.editPage.model = app.meeting;
+                        that.slidePage(app.editPage);
+                    },
+                    error: function() {
+                        navigator.notification.alert("Failed to get record for edit",null,app.appTitle);
+                    }
+                });
+            },
+            
+            error: function(){
+                navigator.notification.alert("Failed to get picklist for edit",null,app.appTitle);
+            }
+        
+        
+        });
+        
+        /**
+        //this is it when not depending on the piklist
+        meeting.fetch({
+            success: function(data) {
+                app.editPage.model = meeting;
+                that.slidePage(app.editPage);
+            },
+            error: function() {
+                alert("Failed to get record for edit");
+            }
+        });
+        **/
+    },
+
+    sync: function() {
+        var that = this;
+        app.localMeetings.fetch({
+            success: function() {
+                app.localPortfolioMeetings.fetch({
+                    success: function() {
+                        app.localCapabilityMeetings.fetch({
+                            success: function() {
+                                app.localInternalfundMeetings.fetch({
+                                    success: function() {
+                                        app.localOpportunityMeetings.fetch({
+                                            success: function() {
+                                                that.slidePage(app.syncPage);
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        });
+        
+        //localPortfolioMeetings is its own collection, of locally modified portfoliomeetings
+        //it shouldnt contain anything else
+        //what does it contain?
+        //guessing it just doesnt magically update or trigger or whatall
+        //app.localPortfolioMeetings.fetch();
+        // Show page right away - list will redraw when data comes in OR NOT>>>>
+        //this.slidePage(app.syncPage);
+        
+        
+        //makes no difference.
+        //$.when(app.localPortfolioMeetings.fetch()).then(this.slidePage(app.syncPage));
+        
+    }
+ 
+});
+
+
+    </script>
+    
+  </head>
+  <body class="">
+    <div id="content" class="hasBG"></div>
+  </body>
+</html>

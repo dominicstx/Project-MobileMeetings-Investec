@@ -1,0 +1,103 @@
+        /***/
+        .hasBG {background-image: url(images/background.png);
+                background-attachment:fixed;
+                background-position:center; }
+        /***/
+        .list {background:transparent;}
+        .list li { border:solid 1px black; border-top: solid 1px black !important; 
+                    background-color:#fff; border-radius:10px; margin:5px;
+                    padding: 15px 10px 15px 10px
+                    
+                    }
+        .list li.separator { 
+                    border-top: solid 1px #eee !important;
+                    border-bottom: 0px !important;
+                    border-left: 0px !important;
+                    border-right: 0px !important;
+                    background-color:#000; border-radius:0px; margin:0px;
+                    color:#fff;
+                    padding: 20px 10px 15px 10px;
+            background-image: -webkit-linear-gradient(top, #000 0, #666 100%)  !important;
+            background-image: linear-gradient(to bottom, #000 0, #666 100%)  !important;
+                    
+                    }
+                    
+                    
+
+        .info-group { border:solid 1px black; background-color:#fff; border-radius:10px; padding:5px; margin-bottom:5px}
+        .info-group li {list-style: none}
+        
+        .input-group {padding:5px; }
+        
+        /**
+        .content {background: transparent !important}
+        .content-padded {background: transparent !important}
+        **/
+        
+        label {background:#fff}
+        
+        
+        .listItem {text-overflow:ellipsis;width:auto;overflow:hidden;white-space:nowrap;padding-right:10px;
+        }
+        
+        #overlay {
+            display:none; position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%; height: 100%; background-color: #999; filter:alpha(opacity=50); -moz-opacity:0.5; -khtml-opacity: 0.5; opacity: 0.5; z-index: 9000;
+}
+        #overinner {margin:150px auto; height:10px; width:10px}
+        #alpha_message {width:100%;text-align:center;color:#ffffff;opacity:1;z-index:8999;}
+        
+        .icon-inactive {color:#ccc}
+        .icon-negative {color:#e71e1e}
+        .icon-positive {color:#34ba15}
+        .icon-main {color:#34ba15}
+        
+        
+        
+        .button-disabled {
+            color:#ccc !important;
+            background-color: #ccc  !important;
+            background-image: -webkit-linear-gradient(top, #ccc 0, #eee 100%)  !important;
+            background-image: linear-gradient(to bottom, #ccc 0, #eee 100%)  !important;
+        }
+        
+        
+        .alpha-em {
+            background-color: #ff0 !important;
+        }
+
+
+        /* Pointed part of DISABLED directional button */
+.bar-title .button-next-disabled:before {
+  background-image: -webkit-gradient(linear, left bottom, right top, from(#ccc), to(#eee)) !important;
+  background-image: gradient(linear, left bottom, right top, from(#ccc), to(#eee)) !important;
+
+}
+
+        
+        .button-offline {
+            max-width:10%;
+            text-overflow:ellipsis
+        }
+        
+        
+        
+        
+@media only screen and (max-device-width: 480px) {
+    #header a.logo {
+        padding-left: 70px;
+        background-image: url('/images/logo-64x64.png'); /* this is our mobile sized graphic at 64x64px */
+    }
+}
+
+        
+    /* alpha text clip in bottom buttons to fit more on a portrait ipad */
+    .alpha-button-next {
+        max-width:20%;
+        overflow: hidden;
+        text-overflow: clip;
+    }
+
+

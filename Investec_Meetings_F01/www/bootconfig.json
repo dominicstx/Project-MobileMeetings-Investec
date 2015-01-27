@@ -1,0 +1,10 @@
+{
+    "remoteAccessConsumerKey": "3MVG9WtWSKUDG.x6Vz_yR_4iCczHlBSd2lxDUc51RbEhpt3TFP9c8JRwwKSpOebTbImAJ2lTm5o8kcNylKJq7",
+    "oauthRedirectURI": "alphafmc://success",
+    "oauthScopes": ["web", "api"],
+    "isLocal": true,
+    "startPage": "index.html",
+    "errorPage": "error.html",
+    "shouldAuthenticate": true,
+    "attemptOfflineLoad": true
+}
